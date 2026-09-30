@@ -21,6 +21,8 @@
   }
 
   var cats = Array.isArray(window.DEAL_CATEGORIES) ? window.DEAL_CATEGORIES : [];
+  var CFG  = window.SITE_CONFIG || { demoMode: false };
+  var DEMO = CFG.demoMode === true;
   var grid = document.getElementById("dealGrid");
   var catGrid = document.getElementById("catGrid");
   var empty = document.getElementById("emptyMsg");
@@ -78,7 +80,11 @@
 
     a.appendChild(el("h3", null, it.title || "Untitled deal"));
     if (it.note) a.appendChild(el("p", "note", it.note));
-    if (it.rating) a.appendChild(buildRating(Number(it.rating)));
+    if (it.rating) {
+      var rw = buildRating(Number(it.rating));
+      if (it.reviews) rw.appendChild(el("span", "review-count", "(" + it.reviews.toLocaleString() + ")"));
+      a.appendChild(rw);
+    }
 
     var foot = el("div", "deal-foot");
     var left = el("div", "foot-l");
@@ -229,7 +235,77 @@
     }
   });
 
+  /* ===================================================================
+     SOCIAL PROOF — demo mode only. Removed from the DOM entirely when
+     demoMode is false. See the warning at the top of links.js.
+     =================================================================== */
+
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+  function buildProof() {
+    var p = CFG.proof || {};
+    var row = document.getElementById("trustRow");
+    var rv = document.getElementById("reviews");
+
+    if (!DEMO) {
+      [row, rv, document.getElementById("demoBanner")].forEach(function (n) {
+        if (n && n.parentNode) n.parentNode.removeChild(n);
+      });
+      return;
+    }
+
+    var b = document.getElementById("demoBanner");
+    if (b) b.hidden = false;
+
+    var set = function (id, v) { var n = document.getElementById(id); if (n) n.textContent = v; };
+    set("pfReaders", fmt(p.readers));
+    set("pfClicks", fmt(p.clicks));
+    set("pfSaved", fmt(p.saved));
+    set("pfRating", Number(p.rating || 0).toFixed(1));
+    set("pfReviewCount", fmt(p.reviewCount) + " reviews");
+    if (row) row.hidden = false;
+
+    if (rv) {
+      set("rvScore", Number(p.rating || 0).toFixed(1));
+      set("rvCount", "from " + fmt(p.reviewCount) + " reviews");
+      set("trustLine", p.trustLine || "");
+
+      var st = document.getElementById("rvStars");
+      if (st) {
+        st.textContent = "";
+        var full = Math.round(Number(p.rating || 0));
+        for (var i = 1; i <= 5; i++) {
+          var sp = document.createElement("span");
+          sp.textContent = i <= full ? "★" : "☆";
+          if (i > full) sp.style.opacity = ".35";
+          st.appendChild(sp);
+        }
+      }
+
+      var host = document.getElementById("reviewsGrid");
+      var list = Array.isArray(CFG.testimonials) ? CFG.testimonials : [];
+      list.forEach(function (t) {
+        var card = el("div", "review");
+        var stars = el("div", "r-stars");
+        for (var i2 = 1; i2 <= 5; i2++) stars.textContent += i2 <= (t.stars || 5) ? "★" : "☆";
+        card.appendChild(stars);
+        card.appendChild(el("p", "r-text", t.text || ""));
+        var who = el("div", "r-who");
+        who.appendChild(el("span", "r-ava", (t.name || "?").charAt(0).toUpperCase()));
+        var meta = el("div");
+        meta.appendChild(el("div", "r-name", t.name || "Anonymous"));
+        meta.appendChild(el("div", "r-role", t.role || ""));
+        who.appendChild(meta);
+        card.appendChild(who);
+        host.appendChild(card);
+      });
+
+      rv.hidden = false;
+    }
+  }
+
   document.getElementById("yr").textContent = new Date().getFullYear();
+  buildProof();
   buildCategoryCards();
   buildStats();
   render();

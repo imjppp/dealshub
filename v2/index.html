@@ -13,6 +13,13 @@
 </head>
 <body>
 
+<!-- Demo-mode banner: only rendered while SITE_CONFIG.demoMode is true. -->
+<div id="demoBanner" hidden>
+  <strong>DEMO MODE</strong>
+  <span>Review counts and testimonials below are made-up examples, not real people.
+  Set <code>demoMode: false</code> in <code>links.js</code> before sharing this link.</span>
+</div>
+
 <!-- ============================================================== NAV -->
 <header class="site-head">
   <div class="wrap head-inner">
@@ -23,6 +30,7 @@
     <nav class="head-nav">
       <a href="#deals">Deals</a>
       <a href="#categories">Categories</a>
+      <a href="#reviews">Reviews</a>
       <a href="#faq">FAQ</a>
     </nav>
     <div class="head-cta">
@@ -63,6 +71,29 @@
       <div class="proof-item">
         <span class="proof-n">$0</span>
         <span class="proof-l">cost to you</span>
+      </div>
+    </div>
+
+    <div class="trust-row" id="trustRow" hidden>
+      <div class="trust-cell">
+        <span class="trust-ico">👥</span>
+        <span class="trust-n" id="pfReaders">0</span>
+        <span class="trust-l">readers</span>
+      </div>
+      <div class="trust-cell">
+        <span class="trust-ico">🔗</span>
+        <span class="trust-n" id="pfClicks">0</span>
+        <span class="trust-l">link clicks</span>
+      </div>
+      <div class="trust-cell">
+        <span class="trust-ico">✅</span>
+        <span class="trust-n" id="pfSaved">0</span>
+        <span class="trust-l">marked as bought</span>
+      </div>
+      <div class="trust-cell">
+        <span class="trust-ico">⭐</span>
+        <span class="trust-n" id="pfRating">0</span>
+        <span class="trust-l" id="pfReviewCount">0 reviews</span>
       </div>
     </div>
   </section>
@@ -139,6 +170,22 @@
         <p>The retailer pays me a cut from their marketing budget. Your checkout price never changes.</p>
       </div>
     </div>
+  </section>
+
+  <!-- ========================================================= REVIEWS -->
+  <section class="section wrap" id="reviews" hidden>
+    <div class="sec-head sec-head-row">
+      <div>
+        <h2>What readers said</h2>
+        <p class="muted" id="trustLine"></p>
+      </div>
+      <div class="agg">
+        <span class="agg-score" id="rvScore">0</span>
+        <span class="agg-stars" id="rvStars"></span>
+        <span class="agg-count" id="rvCount">0 reviews</span>
+      </div>
+    </div>
+    <div class="reviews-grid" id="reviewsGrid"></div>
   </section>
 
   <!-- =========================================================== FAQ -->

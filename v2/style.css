@@ -567,3 +567,91 @@ p { margin: 0; }
   * { transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* ============================================================================
+   SOCIAL PROOF (demo-mode only) — gated by SITE_CONFIG.demoMode in links.js
+   ========================================================================== */
+
+#demoBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 24px;
+  background: repeating-linear-gradient(45deg, #7f1d1d, #7f1d1d 12px, #991b1b 12px, #991b1b 24px);
+  color: #fff;
+  font-size: .82rem;
+  text-align: center;
+}
+#demoBanner strong {
+  background: #fff;
+  color: #7f1d1d;
+  padding: 2px 8px;
+  border-radius: 5px;
+  letter-spacing: .08em;
+  font-size: .72rem;
+}
+#demoBanner code { background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 4px; font-size: .95em; }
+
+.trust-row {
+  margin-top: 40px;
+  display: inline-flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.trust-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-soft);
+}
+.trust-ico { font-size: 1rem; }
+.trust-n { font-weight: 700; font-size: 1rem; }
+.trust-l { color: var(--muted); font-size: .82rem; }
+
+.agg { display: flex; align-items: center; gap: 10px; }
+.agg-score { font-size: 2.2rem; font-weight: 800; letter-spacing: -.03em; }
+.agg-stars { color: var(--star); letter-spacing: 1px; }
+.agg-count { color: var(--muted); font-size: .88rem; }
+
+.reviews-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(258px, 1fr));
+  gap: 14px;
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+}
+.review .r-stars { color: var(--star); font-size: .9rem; letter-spacing: 1px; }
+.review .r-text { margin: 0; font-size: .94rem; flex-grow: 1; }
+.review .r-who { display: flex; align-items: center; gap: 10px; }
+.review .r-ava {
+  display: grid; place-items: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bg-sunk);
+  font-size: .82rem;
+  font-weight: 700;
+}
+.review .r-name { font-size: .88rem; font-weight: 600; }
+.review .r-role { color: var(--muted); font-size: .76rem; }
+
+.review-count { color: var(--muted); font-size: .76rem; margin-left: 6px; }
+
+@media (max-width: 720px) {
+  .trust-row { width: 100%; }
+  .trust-cell { flex: 1 1 44%; justify-content: center; }
+}

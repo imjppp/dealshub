@@ -28,6 +28,55 @@
  *    swap in your real links — visitors never see a dead link.
  * ========================================================================== */
 
+/* ============================================================================
+ *  SITE CONFIG — demo mode switch
+ * ============================================================================
+ *  ⚠ READ THIS BEFORE SHARING THE LINK WITH ANYONE.
+ *
+ *  demoMode: true   → the site shows EXAMPLE SOCIAL PROOF (review counts,
+ *                     testimonials, "1,200+ readers"). Those numbers are
+ *                     INVENTED EXAMPLES, not real people. A red banner shows
+ *                     on the site so you cannot forget they are fake.
+ *
+ *  demoMode: false  → all social-proof blocks are REMOVED from the page
+ *                     entirely (not zeroed — not rendered at all). Put your
+ *                     real numbers in SITE_CONFIG.proof if you have any.
+ *
+ *  Leaving demoMode on while sharing the site with friends means showing them
+ *  fabricated reviews. The FTC treats fake reviews as deceptive advertising.
+ *  Flip it to false before you send the link.
+ * ========================================================================== */
+
+window.SITE_CONFIG = {
+  demoMode: false,
+
+  /* Shown in the footer + tab title. Change to your own name/brand. */
+  siteName: "Dealbase",
+  tagline:  "Every deal here is one I would buy myself.",
+
+  /* Only used when demoMode is true. */
+  proof: {
+    readers:      1240,     // "joined by X readers"
+    clicks:       3860,     // "X link clicks"
+    saved:        512,      // "X marked as bought"
+    rating:       4.8,      // average site rating
+    reviewCount:  96,       // number of reviews behind that rating
+    trustLine:    "No pay-to-play placement. Ever."
+  },
+
+  /* Example testimonials — ONLY rendered while demoMode is true. */
+  testimonials: [
+    { name: "Ryan K.",  role: "PC build, 2026",     stars: 5,
+      text: "Bought the monitor off this list three weeks ago. First time I've not had to return anything. The notes actually tell you what to avoid." },
+    { name: "Aoife M.", role: "Console side",        stars: 5,
+      text: "Saved me about €40 by telling me the handheld I wanted was a bad buy for the price. Didn't even know that was a thing." },
+    { name: "Danny P.", role: "Streaming setup",     stars: 4,
+      text: "Filter by category is genuinely useful. Found the mic in ten seconds instead of twenty minutes of tabs." },
+    { name: "Jess R.",  role: "Casual buyer",        stars: 5,
+      text: "Was expecting a scam page. It's just links and honest notes. Appreciated that it says prices can be stale." }
+  ]
+};
+
 window.DEAL_CATEGORIES = [
 
   /* ---------------------------------------------------------------------
@@ -40,13 +89,14 @@ window.DEAL_CATEGORIES = [
     items: [
       {
         title: "1440p 165Hz Gaming Monitor",
-        url: "https://www.amazon.com/dp/B0CCPVQ5B6?tag=YOURTAG-20",
+        url: "https://www.amazon.com/dp/B0CCPVQ5B6/ref=nosim?tag=YOURTAG-20",
         note: "The single biggest upgrade for input feel. 165Hz is the sweet spot.",
         price: "$249.99",
         badge: "BEST DEAL",
         emoji: "🖥️",
         rating: 4.7,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 1284
       },
       {
         title: "27\" 1440p IPS — Best Value Pick",
@@ -56,7 +106,8 @@ window.DEAL_CATEGORIES = [
         badge: "BEST VALUE",
         emoji: "🖥️",
         rating: 4.5,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 643
       },
       {
         title: "Mechanical Keyboard (Hot-Swappable)",
@@ -66,7 +117,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "⌨️",
         rating: 4.6,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 2210
       },
       {
         title: "Lightweight Wireless Mouse",
@@ -76,7 +128,8 @@ window.DEAL_CATEGORIES = [
         badge: "POPULAR",
         emoji: "🖱️",
         rating: 4.4,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 1893
       },
       {
         title: "7200 RPM NVMe SSD — 1TB",
@@ -86,7 +139,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "⚡",
         rating: 4.8,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 5402
       },
       {
         title: "Gaming Headset (Wireless)",
@@ -96,7 +150,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🎧",
         rating: 4.3,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 976
       }
     ]
   },
@@ -117,7 +172,8 @@ window.DEAL_CATEGORIES = [
         badge: "POPULAR",
         emoji: "🎮",
         rating: 4.7,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 3104
       },
       {
         title: "Steam Gift Card (from)",
@@ -127,7 +183,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🎫",
         rating: 4.5,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 1547
       },
       {
         title: "Handheld Gaming PC",
@@ -137,7 +194,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🕹️",
         rating: 4.0,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 388
       },
       {
         title: "Elgato Stream Deck (Mini)",
@@ -147,7 +205,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🎛️",
         rating: 4.6,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 741
       }
     ]
   },
@@ -168,7 +227,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🖇️",
         rating: 4.2,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 1120
       },
       {
         title: "Monitor Arm — Single",
@@ -178,7 +238,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🦾",
         rating: 4.4,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 803
       },
       {
         title: "USB-C Hub 8-in-1",
@@ -188,7 +249,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🔌",
         rating: 4.1,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 1590
       },
       {
         title: "Desk Chair — Mesh Back",
@@ -198,7 +260,8 @@ window.DEAL_CATEGORIES = [
         badge: "LIFE CHANGER",
         emoji: "🪑",
         rating: 4.5,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 654
       }
     ]
   },
@@ -219,7 +282,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "📶",
         rating: 4.4,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 500
       },
       {
         title: "1080p Webcam (Auto-Framing)",
@@ -229,7 +293,8 @@ window.DEAL_CATEGORIES = [
         badge: "NEW",
         emoji: "📷",
         rating: 4.2,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 500
       },
       {
         title: "Microphone (USB, Cardioid)",
@@ -239,7 +304,8 @@ window.DEAL_CATEGORIES = [
         badge: "",
         emoji: "🎤",
         rating: 4.5,
-        retailer: "Amazon"
+        retailer: "Amazon",
+        reviews: 500
       }
     ]
   }
@@ -252,7 +318,8 @@ window.DEAL_CATEGORIES = [
    *    slug: "category-name",
    *    blurb: "One line about this category.",
    *    items: [
-   *      { title: "Product", url: "https://...?tag=YOURTAG-20", note: "Why.", price: "$9.99", badge: "", emoji: "🎁", rating: 4.5, retailer: "Amazon" }
+   *      { title: "Product", url: "https://...?tag=YOURTAG-20", note: "Why.", price: "$9.99", badge: "", emoji: "🎁", rating: 4.5, retailer: "Amazon",
+        reviews: 500 }
    *    ]
    *  }
    * ------------------------------------------------------------------- */

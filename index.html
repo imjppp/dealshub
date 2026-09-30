@@ -13,12 +13,20 @@
 </head>
 <body>
 
+<!-- Demo-mode banner: only rendered while SITE_CONFIG.demoMode is true. -->
+<div id="demoBanner" hidden>
+  <strong>DEMO MODE</strong>
+  <span>The review counts and testimonials on this page are made-up examples, not real people.
+  Set <code>demoMode: false</code> in <code>links.js</code> before sharing this link.</span>
+</div>
+
 <header class="hero">
   <nav class="nav">
-    <a class="logo" href="#top">🏷️ DealsHub</a>
+    <a class="logo" href="#top">🏷️ <span class="site-name">DealsHub</span></a>
     <div class="nav-links">
       <a href="#deals">Deals</a>
       <a href="#top-picks">Top Picks</a>
+      <a href="#reviews">Reviews</a>
       <a href="#about">About</a>
     </div>
   </nav>
@@ -36,6 +44,30 @@
       <div class="stat"><span class="s-num" id="statTotal">0</span><span class="s-lbl">deals listed</span></div>
       <div class="stat"><span class="s-num" id="statCats">0</span><span class="s-lbl">categories</span></div>
       <div class="stat"><span class="s-num">$0</span><span class="s-lbl">cost to you</span></div>
+    </div>
+
+    <!-- Social proof strip: rendered only when demoMode is on. -->
+    <div class="proof-strip" id="proofStrip" hidden>
+      <div class="proof-item">
+        <span class="p-ico">👥</span>
+        <span class="p-num" id="pfReaders">0</span>
+        <span class="p-lbl">readers</span>
+      </div>
+      <div class="proof-item">
+        <span class="p-ico">🔗</span>
+        <span class="p-num" id="pfClicks">0</span>
+        <span class="p-lbl">link clicks</span>
+      </div>
+      <div class="proof-item">
+        <span class="p-ico">✅</span>
+        <span class="p-num" id="pfSaved">0</span>
+        <span class="p-lbl">marked as bought</span>
+      </div>
+      <div class="proof-item">
+        <span class="p-ico">⭐</span>
+        <span class="p-num" id="pfRating">0</span>
+        <span class="p-lbl" id="pfReviewCount">0 reviews</span>
+      </div>
     </div>
   </div>
 </header>
@@ -65,6 +97,22 @@
     </div>
     <div id="dealGrid" class="grid" aria-live="polite"></div>
     <p id="emptyMsg" class="empty" hidden>No deals match that. Try a different search or category.</p>
+  </section>
+
+  <!-- Reviews: rendered only when demoMode is on. -->
+  <section id="reviews" class="reviews" hidden>
+    <div class="reviews-inner">
+      <div class="reviews-head">
+        <h2>What people said</h2>
+        <div class="agg">
+          <span class="agg-score" id="rvScore">0</span>
+          <span class="agg-stars" id="rvStars"></span>
+          <span class="agg-count" id="rvCount">0 reviews</span>
+        </div>
+      </div>
+      <p class="trust-line" id="trustLine"></p>
+      <div class="reviews-grid" id="reviewsGrid"></div>
+    </div>
   </section>
 
   <section id="how" class="how">
@@ -117,7 +165,7 @@
 
 <footer>
   <div class="footer-inner">
-    <p>© <span id="yr"></span> DealsHub. Built as an affiliate showcase.</p>
+    <p>© <span id="yr"></span> <span class="site-name">DealsHub</span>. Built as an affiliate showcase.</p>
     <p class="fine">Prices and availability are set by the retailers. Some links are affiliate links, which help support this site at no cost to you.</p>
   </div>
 </footer>

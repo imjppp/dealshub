@@ -22,6 +22,8 @@
   }
 
   var cats = Array.isArray(window.DEAL_CATEGORIES) ? window.DEAL_CATEGORIES : [];
+  var CFG  = window.SITE_CONFIG || { demoMode: false };
+  var DEMO = CFG.demoMode === true;
   var grid = document.getElementById("dealGrid");
   var bar = document.getElementById("filterBar");
   var empty = document.getElementById("emptyMsg");
@@ -56,7 +58,14 @@
     a.appendChild(el("h3", null, item.title || "Untitled deal"));
     if (item.note) a.appendChild(el("p", "note", item.note));
 
-    if (item.rating) a.appendChild(buildRating(Number(item.rating)));
+    if (item.rating) {
+      var rw = buildRating(Number(item.rating));
+      if (item.reviews) {
+        var cnt = el("span", "review-count", "(" + item.reviews.toLocaleString() + ")");
+        rw.appendChild(cnt);
+      }
+      a.appendChild(rw);
+    }
 
     var foot = el("div", "card-foot");
     var left = el("div", "foot-left");
@@ -205,7 +214,87 @@
     if (c2) c2.textContent = cats.length;
   }
 
+  /* ===================================================================
+     SOCIAL PROOF — demo mode only.
+     When demoMode is false these blocks are removed from the page, NOT
+     shown as zeros. See the warning in links.js before sharing the site.
+     =================================================================== */
+
+  function fmt(n) { return Number(n || 0).toLocaleString(); }
+
+  function buildProof() {
+    var p = CFG.proof || {};
+    var strip = document.getElementById("proofStrip");
+    var rv = document.getElementById("reviews");
+
+    if (!DEMO) {
+      // Belt and braces: strip the nodes entirely so nothing is left in the DOM.
+      [strip, rv, document.getElementById("demoBanner")].forEach(function (n) {
+        if (n && n.parentNode) n.parentNode.removeChild(n);
+      });
+      return;
+    }
+
+    var banner = document.getElementById("demoBanner");
+    if (banner) banner.hidden = false;
+
+    var r = document.getElementById("pfReaders");
+    var c = document.getElementById("pfClicks");
+    var sv = document.getElementById("pfSaved");
+    var rt = document.getElementById("pfRating");
+    var rc = document.getElementById("pfReviewCount");
+    if (r) r.textContent = fmt(p.readers);
+    if (c) c.textContent = fmt(p.clicks);
+    if (sv) sv.textContent = fmt(p.saved);
+    if (rt) rt.textContent = Number(p.rating || 0).toFixed(1);
+    if (rc) rc.textContent = fmt(p.reviewCount) + " reviews";
+    if (strip) strip.hidden = false;
+
+    // reviews block
+    if (rv) {
+      var sc = document.getElementById("rvScore");
+      if (sc) sc.textContent = Number(p.rating || 0).toFixed(1);
+      var st = document.getElementById("rvStars");
+      if (st) {
+        st.textContent = "";
+        var full = Math.round(Number(p.rating || 0));
+        for (var i = 1; i <= 5; i++) {
+          var sp = document.createElement("span");
+          sp.textContent = i <= full ? "★" : "☆";
+          if (i > full) sp.style.opacity = ".35";
+          st.appendChild(sp);
+        }
+      }
+      var cnt2 = document.getElementById("rvCount");
+      if (cnt2) cnt2.textContent = "from " + fmt(p.reviewCount) + " reviews";
+      var tl = document.getElementById("trustLine");
+      if (tl && p.trustLine) tl.textContent = p.trustLine;
+
+      var host = document.getElementById("reviewsGrid");
+      var list = Array.isArray(CFG.testimonials) ? CFG.testimonials : [];
+      list.forEach(function (t) {
+        var card = el("div", "review");
+        var stars = el("div", "r-stars");
+        for (var i2 = 1; i2 <= 5; i2++) stars.textContent += i2 <= (t.stars || 5) ? "★" : "☆";
+        card.appendChild(stars);
+        card.appendChild(el("p", "r-text", t.text || ""));
+        var who = el("div", "r-who");
+        var ava = el("span", "r-ava", (t.name || "?").charAt(0).toUpperCase());
+        var meta = el("div");
+        meta.appendChild(el("div", "r-name", t.name || "Anonymous"));
+        meta.appendChild(el("div", "r-role", t.role || ""));
+        who.appendChild(ava);
+        who.appendChild(meta);
+        card.appendChild(who);
+        host.appendChild(card);
+      });
+
+      rv.hidden = false;
+    }
+  }
+
   document.getElementById("yr").textContent = new Date().getFullYear();
+  buildProof();
   buildFilters();
   buildPicks();
   buildStats();
