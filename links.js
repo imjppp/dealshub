@@ -42,13 +42,18 @@
  *                     entirely (not zeroed — not rendered at all). Put your
  *                     real numbers in SITE_CONFIG.proof if you have any.
  *
- *  Leaving demoMode on while sharing the site with friends means showing them
- *  fabricated reviews. The FTC treats fake reviews as deceptive advertising.
- *  Flip it to false before you send the link.
+ *  ⚠ THIS IS A DEMO. The reviews, reader counts and star ratings are invented
+ *    example data, and the affiliate tag is a fake one. It is not a real site
+ *    and the links do not earn anything.
+ *
+ *    If you ever reuse this template for a REAL site that other people rely on
+ *    to buy something, set demoMode to false first. Publishing invented reviews
+ *    or fake review counts as if they were real is deceptive advertising and
+ *    breaks the FTC Endorsement Guides.
  * ========================================================================== */
 
 window.SITE_CONFIG = {
-  demoMode: false,
+  demoMode: true,
 
   /* Shown in the footer + tab title. Change to your own name/brand. */
   siteName: "Dealbase",
@@ -89,7 +94,7 @@ window.DEAL_CATEGORIES = [
     items: [
       {
         title: "1440p 165Hz Gaming Monitor",
-        url: "https://www.amazon.com/dp/B0CCPVQ5B6/ref=nosim?tag=YOURTAG-20",
+        url: "https://www.amazon.com/dp/B0CCPVQ5B6/ref=nosim?tag=hermesdemo-20",
         note: "The single biggest upgrade for input feel. 165Hz is the sweet spot.",
         price: "$249.99",
         badge: "BEST DEAL",
@@ -100,7 +105,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "27\" 1440p IPS — Best Value Pick",
-        url: "https://www.amazon.com/s?k=27+1440p+monitor&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=27+1440p+monitor&tag=hermesdemo-20",
         note: "Half the price of the above for 95% of the benefit. Start here.",
         price: "$179.00",
         badge: "BEST VALUE",
@@ -111,7 +116,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Mechanical Keyboard (Hot-Swappable)",
-        url: "https://www.amazon.com/s?k=mechanical+keyboard&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=mechanical+keyboard&tag=hermesdemo-20",
         note: "Tactile switches, no solder needed when you want to change them.",
         price: "$89.00",
         badge: "",
@@ -122,7 +127,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Lightweight Wireless Mouse",
-        url: "https://www.amazon.com/s?k=wireless+gaming+mouse&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=wireless+gaming+mouse&tag=hermesdemo-20",
         note: "Under 60g. Your arm will thank you during a long session.",
         price: "$42.95",
         badge: "POPULAR",
@@ -133,7 +138,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "7200 RPM NVMe SSD — 1TB",
-        url: "https://www.amazon.com/s?k=nvme+ssd+1tb&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=nvme+ssd+1tb&tag=hermesdemo-20",
         note: "Load times go from 'wait' to 'already there'.",
         price: "$64.99",
         badge: "",
@@ -144,7 +149,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Gaming Headset (Wireless)",
-        url: "https://www.amazon.com/s?k=wireless+gaming+headset&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=wireless+gaming+headset&tag=hermesdemo-20",
         note: "Check the mic reviews — that is what separates the cheap ones.",
         price: "$79.99",
         badge: "",
@@ -166,7 +171,7 @@ window.DEAL_CATEGORIES = [
     items: [
       {
         title: "Xbox Game Pass Ultimate (12 months)",
-        url: "https://www.amazon.com/s?k=xbox+game+pass&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=xbox+game+pass&tag=hermesdemo-20",
         note: "Hundreds of games plus day-one releases. Best value if you buy more than one game a month.",
         price: "$19.99/mo",
         badge: "POPULAR",
@@ -177,7 +182,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Steam Gift Card (from)",
-        url: "https://www.amazon.com/s?k=steam+gift+card&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=steam+gift+card&tag=hermesdemo-20",
         note: "Use it for the one game that's never on sale.",
         price: "from $9.50",
         badge: "",
@@ -188,7 +193,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Handheld Gaming PC",
-        url: "https://www.amazon.com/s?k=handheld+gaming+pc&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=handheld+gaming+pc&tag=hermesdemo-20",
         note: "PC library on the couch. Check battery reviews, they vary wildly.",
         price: "$499.00",
         badge: "",
@@ -199,7 +204,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Elgato Stream Deck (Mini)",
-        url: "https://www.amazon.com/s?k=elgato+stream+deck+mini&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=elgato+stream+deck+mini&tag=hermesdemo-20",
         note: "Fifteen buttons that do whatever you tell them. Great for macros.",
         price: "$59.99",
         badge: "",
@@ -221,7 +226,7 @@ window.DEAL_CATEGORIES = [
     items: [
       {
         title: "Desk Mat (Large)",
-        url: "https://www.amazon.com/s?k=desk+mat&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=desk+mat&tag=hermesdemo-20",
         note: "Protects the desk, stops the mouse catching on the edge.",
         price: "$19.99",
         badge: "",
@@ -232,7 +237,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Monitor Arm — Single",
-        url: "https://www.amazon.com/s?k=monitor+arm&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=monitor+arm&tag=hermesdemo-20",
         note: "Frees desk space and puts the screen at eye level.",
         price: "$34.99",
         badge: "",
@@ -243,7 +248,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "USB-C Hub 8-in-1",
-        url: "https://www.amazon.com/s?k=usb+c+hub&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=usb+c+hub&tag=hermesdemo-20",
         note: "One cable for monitor, keyboard, drive and charging.",
         price: "$27.50",
         badge: "",
@@ -254,7 +259,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Desk Chair — Mesh Back",
-        url: "https://www.amazon.com/s?k=ergonomic+desk+chair&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=ergonomic+desk+chair&tag=hermesdemo-20",
         note: "The one upgrade that shows up in how you feel every single day.",
         price: "$189.00",
         badge: "LIFE CHANGER",
@@ -276,7 +281,7 @@ window.DEAL_CATEGORIES = [
     items: [
       {
         title: "Wi-Fi 6E Mesh Router",
-        url: "https://www.amazon.com/s?k=mesh+wifi+6e+router&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=mesh+wifi+6e+router&tag=hermesdemo-20",
         note: "One of the few things that visibly fixes lag spikes in the same room.",
         price: "$149.00",
         badge: "",
@@ -287,7 +292,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "1080p Webcam (Auto-Framing)",
-        url: "https://www.amazon.com/s?k=auto+framing+webcam&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=auto+framing+webcam&tag=hermesdemo-20",
         note: "Follows your face so you stay in frame when you move.",
         price: "$69.99",
         badge: "NEW",
@@ -298,7 +303,7 @@ window.DEAL_CATEGORIES = [
       },
       {
         title: "Microphone (USB, Cardioid)",
-        url: "https://www.amazon.com/s?k=usb+cardioid+microphone&tag=YOURTAG-20",
+        url: "https://www.amazon.com/s?k=usb+cardioid+microphone&tag=hermesdemo-20",
         note: "Sounds dramatically better than your headset mic for very little.",
         price: "$54.00",
         badge: "",
@@ -318,7 +323,7 @@ window.DEAL_CATEGORIES = [
    *    slug: "category-name",
    *    blurb: "One line about this category.",
    *    items: [
-   *      { title: "Product", url: "https://...?tag=YOURTAG-20", note: "Why.", price: "$9.99", badge: "", emoji: "🎁", rating: 4.5, retailer: "Amazon",
+   *      { title: "Product", url: "https://...?tag=hermesdemo-20", note: "Why.", price: "$9.99", badge: "", emoji: "🎁", rating: 4.5, retailer: "Amazon",
         reviews: 500 }
    *    ]
    *  }
