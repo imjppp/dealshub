@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealbase — Every deal, hand-picked</title>
+<meta name="description" content="A curated list of the gear and deals actually worth buying. Affiliate links — costs you nothing extra.">
+<meta property="og:title" content="Dealbase — Every deal, hand-picked">
+<meta property="og:description" content="Curated gear and deals, hand-picked.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================== NAV -->
+<header class="site-head">
+  <div class="wrap head-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">⚡</span>
+      <span>Dealbase</span>
+    </a>
+    <nav class="head-nav">
+      <a href="#deals">Deals</a>
+      <a href="#categories">Categories</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="head-cta">
+      <a class="btn btn-primary btn-sm" href="#deals">Browse deals</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ========================================================== HERO -->
+  <section class="hero wrap">
+    <span class="eyebrow">Hand-picked · No spam</span>
+    <h1 class="hero-title">
+      Every deal here is one<br>
+      <span class="hl">I would buy myself.</span>
+    </h1>
+    <p class="hero-sub">
+      I test everything before it lands on this page. Some things I skipped entirely —
+      those are the ones you'll never see listed.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#deals">See all deals</a>
+      <a class="btn btn-ghost" href="#how">How it works</a>
+    </div>
+
+    <div class="hero-proof">
+      <div class="proof-item">
+        <span class="proof-n" id="hpDeals">0</span>
+        <span class="proof-l">deals listed</span>
+      </div>
+      <div class="proof-div"></div>
+      <div class="proof-item">
+        <span class="proof-n" id="hpCats">0</span>
+        <span class="proof-l">categories</span>
+      </div>
+      <div class="proof-div"></div>
+      <div class="proof-item">
+        <span class="proof-n">$0</span>
+        <span class="proof-l">cost to you</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================================================== CATEGORIES -->
+  <section class="section wrap" id="categories">
+    <div class="sec-head">
+      <h2>Shop by category</h2>
+      <p>Pick a lane, or search everything at once.</p>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+  </section>
+
+  <!-- ========================================================= DEALS -->
+  <section class="section wrap" id="deals">
+    <div class="sec-head sec-head-row">
+      <div>
+        <h2>All deals</h2>
+        <p class="muted" id="resultCount">0 deals</p>
+      </div>
+      <div class="deal-tools">
+        <div class="search">
+          <svg class="search-ico" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+          <input id="searchInput" type="search" placeholder="Search 17 deals…" aria-label="Search deals" autocomplete="off">
+          <button class="search-x" id="searchClear" type="button" aria-label="Clear search">
+            <svg viewBox="0 0 20 20" fill="none"><path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="sort">
+          <label for="sortSel">Sort</label>
+          <select id="sortSel">
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="rating">Top rated</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="active-filters" id="activeFilters" hidden></div>
+    <div class="deal-grid" id="dealGrid" aria-live="polite"></div>
+    <div class="empty-state" id="emptyMsg" hidden>
+      <span class="empty-ico">🔍</span>
+      <h3>Nothing matches that</h3>
+      <p>Try a different search, or clear the filters.</p>
+      <button class="btn btn-ghost btn-sm" id="resetBtn" type="button">Reset everything</button>
+    </div>
+  </section>
+
+  <!-- =========================================================== HOW -->
+  <section class="section wrap" id="how">
+    <div class="sec-head">
+      <h2>How it works</h2>
+      <p>Three steps, no catch.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <span class="step-n">1</span>
+        <h3>Find something you want</h3>
+        <p>Filter by category or search. Prices and ratings are on every card so you can skip the junk fast.</p>
+      </div>
+      <div class="step">
+        <span class="step-n">2</span>
+        <h3>Click through to the store</h3>
+        <p>Every card opens the retailer in a new tab, clearly marked as a sponsored link. No redirect chains.</p>
+      </div>
+      <div class="step">
+        <span class="step-n">3</span>
+        <h3>Pay exactly the same</h3>
+        <p>The retailer pays me a cut from their marketing budget. Your checkout price never changes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== FAQ -->
+  <section class="section wrap" id="faq">
+    <div class="sec-head">
+      <h2>Questions</h2>
+      <p>The short answers.</p>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Does this cost me anything?</summary>
+        <p>No. The price you see at the retailer is the price you pay. Affiliate commission is paid by the retailer out of their own marketing budget.</p>
+      </details>
+      <details>
+        <summary>Why are some deals missing?</summary>
+        <p>Because a placeholder link is still in place. Deals only appear once a real affiliate link has been filled in — so nothing broken ever reaches this page.</p>
+      </details>
+      <details>
+        <summary>How did you pick these?</summary>
+        <p>Own it or skip it. If a product is only here because the commission was good, it doesn't make the list.</p>
+      </details>
+      <details>
+        <summary>Do the prices update automatically?</summary>
+        <p>No — they're noted by hand and can go stale. Always confirm the live price on the retailer's page before buying.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- =========================================================== CTA -->
+  <section class="wrap">
+    <div class="cta-band">
+      <div>
+        <h2>Can't decide? Start with the top three.</h2>
+        <p>If you only buy three things, buy these — they're the ones I'd recommend first.</p>
+      </div>
+      <a class="btn btn-invert" href="#deals">See top picks</a>
+    </div>
+  </section>
+</main>
+
+<!-- ========================================================== FOOTER -->
+<footer class="site-foot">
+  <div class="wrap foot-inner">
+    <div class="foot-col">
+      <a class="brand" href="#top"><span class="brand-mark">⚡</span><span>Dealbase</span></a>
+      <p class="muted">Curated gear and deals. Affiliate links, clearly marked.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Browse</h4>
+      <a href="#deals">All deals</a>
+      <a href="#categories">Categories</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="foot-col">
+      <h4>Legal</h4>
+      <p class="muted small">Not affiliated with any retailer listed. Prices and availability are set by the retailers and may change at any time.</p>
+    </div>
+  </div>
+  <div class="wrap foot-bottom">
+    <p class="muted small">© <span id="yr"></span> Dealbase. Some links are affiliate links, which help keep this site free.</p>
+  </div>
+</footer>
+
+<script src="../links.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
