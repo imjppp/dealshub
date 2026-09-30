@@ -14,6 +14,7 @@
   --accent:    #6d8cff;
   --accent-2:  #b06dff;
   --accent-3:  #22d3ee;
+  --star:      #ffc14d;
   --radius:    16px;
   --maxw:      1120px;
 }
@@ -145,6 +146,85 @@ a:hover { text-decoration: underline; }
 .btn.ghost { border: 1px solid var(--border); color: var(--text); }
 .btn.ghost:hover { border-color: var(--accent); }
 
+/* ------------------------------------------------------------------- stats */
+
+.stats {
+  margin: 46px auto 0;
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  min-width: 128px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+  backdrop-filter: blur(6px);
+}
+
+.s-num { display: block; font-size: 1.5rem; font-weight: 750; letter-spacing: -.02em; }
+.s-lbl { display: block; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .06em; }
+
+/* ------------------------------------------------------------------- picks */
+
+.picks {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 20px 64px;
+  position: relative;
+  z-index: 1;
+}
+
+.picks-inner {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  padding: clamp(24px, 4vw, 38px);
+}
+
+.picks h2 { margin: 0 0 4px; font-size: 1.5rem; letter-spacing: -.02em; }
+.picks-sub { margin: 0 0 22px; color: var(--muted); font-size: .95rem; }
+
+.picks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.pick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-2);
+  color: inherit;
+  transition: transform .18s ease, border-color .18s ease;
+}
+.pick:hover {
+  text-decoration: none;
+  transform: translateY(-2px);
+  border-color: rgba(109,140,255,.55);
+}
+
+.pick-ico { font-size: 1.5rem; }
+.pick h3 { margin: 0; font-size: 1rem; line-height: 1.35; }
+.pick .pick-note { margin: 0; color: var(--muted); font-size: .85rem; flex-grow: 1; }
+.pick-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pick-rank {
+  position: absolute;
+  top: 14px; right: 16px;
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+  opacity: .7;
+}
+
 /* ------------------------------------------------------------------ deals */
 
 .deals-section {
@@ -157,7 +237,7 @@ a:hover { text-decoration: underline; }
 
 .section-head {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
@@ -170,7 +250,46 @@ a:hover { text-decoration: underline; }
   letter-spacing: -.02em;
 }
 
-.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+.count { margin: 4px 0 0; color: var(--muted); font-size: .85rem; }
+
+.controls { display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+
+.search-wrap { position: relative; }
+
+.search-wrap input {
+  width: 260px;
+  max-width: 100%;
+  padding: 10px 34px 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  font-size: .9rem;
+  font-family: inherit;
+}
+.search-wrap input::placeholder { color: var(--muted); }
+.search-wrap input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(109,140,255,.18);
+}
+
+.search-clear {
+  position: absolute;
+  right: 6px; top: 50%;
+  transform: translateY(-50%);
+  width: 22px; height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: var(--card-2);
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.search-clear:hover { color: var(--text); }
+
+.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 .chip {
   padding: 8px 15px;
@@ -180,6 +299,7 @@ a:hover { text-decoration: underline; }
   border-radius: 999px;
   font-size: .85rem;
   font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
   transition: all .15s ease;
 }
@@ -249,10 +369,32 @@ a:hover { text-decoration: underline; }
   flex-grow: 1;
 }
 
+.rating { display: inline-flex; align-items: center; gap: 1px; }
+.rating .star { color: #39415a; font-size: .82rem; }
+.rating .star.on { color: var(--star); }
+.rating .rating-num { margin-left: 6px; color: var(--muted); font-size: .78rem; }
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.foot-left { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
 .card .price {
   font-size: 1.02rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.retailer {
+  color: var(--muted);
+  font-size: .74rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
 
 .card .go {
@@ -263,8 +405,11 @@ a:hover { text-decoration: underline; }
   font-size: .84rem;
   font-weight: 600;
   margin-top: 2px;
+  white-space: nowrap;
 }
 .card:hover .go { gap: 10px; }
+
+.card .ext { color: var(--muted); font-size: .8em; }
 
 .card .cat {
   font-size: .7rem;
@@ -274,16 +419,53 @@ a:hover { text-decoration: underline; }
   opacity: .8;
 }
 
-/* externally-marked link indicator on card hover */
-.card .ext { color: var(--muted); font-size: .8em; }
-
 .empty {
   text-align: center;
   color: var(--muted);
   padding: 48px 0;
 }
 
-/* ------------------------------------------------------------------ about */
+/* --------------------------------------------------------------------- how */
+
+.how {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 20px 70px;
+  position: relative;
+  z-index: 1;
+}
+
+.how h2 { margin: 0 0 20px; font-size: 1.5rem; letter-spacing: -.02em; }
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.how-step {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+}
+
+.step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(100deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 700;
+}
+
+.how-step h3 { margin: 14px 0 6px; font-size: 1rem; }
+.how-step p { margin: 0; color: var(--muted); font-size: .89rem; }
+
+/* ------------------------------------------------------------------- about */
 
 .about {
   max-width: var(--maxw);
@@ -339,7 +521,7 @@ a:hover { text-decoration: underline; }
   font-size: .95em;
 }
 
-/* ----------------------------------------------------------------- footer */
+/* ------------------------------------------------------------------ footer */
 
 footer {
   border-top: 1px solid var(--border);
@@ -357,7 +539,7 @@ footer {
 .footer-inner p { margin: 0 0 6px; }
 .fine { font-size: .8rem; opacity: .8; }
 
-/* ------------------------------------------------------------------ light */
+/* ------------------------------------------------------------------- light */
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -370,15 +552,25 @@ footer {
     --border: #e2e6f0;
   }
   .hero::before { opacity: .5; }
-  .card { box-shadow: 0 1px 2px rgba(16,24,40,.04); }
+  .card, .stat { box-shadow: 0 1px 2px rgba(16,24,40,.04); }
   .badge { color: #7a3fbd; }
+  .rating .star { color: #d3d8e4; }
+  .rating .star.on { color: #d99a00; }
 }
 
-/* ------------------------------------------------------------- responsive */
+/* -------------------------------------------------------------- responsive */
+
+@media (max-width: 760px) {
+  .controls { align-items: stretch; width: 100%; }
+  .search-wrap input { width: 100%; }
+  .filter-bar { justify-content: flex-start; }
+  .section-head { align-items: flex-start; }
+}
 
 @media (max-width: 560px) {
   .nav-links { display: none; }
-  .section-head { flex-direction: column; align-items: flex-start; }
+  .stat { min-width: 100px; padding: 12px 14px; }
+  .s-num { font-size: 1.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
