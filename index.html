@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DealsHub — The Gear I Actually Use</title>
+<meta name="description" content="A hand-picked list of gaming gear and deals. If you buy through these links I get a small commission at no extra cost to you.">
+<meta property="og:title" content="DealsHub — The Gear I Actually Use">
+<meta property="og:description" content="Hand-picked gaming gear and deals.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏷️</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="hero">
+  <nav class="nav">
+    <a class="logo" href="#top">🏷️ DealsHub</a>
+    <div class="nav-links">
+      <a href="#about">About</a>
+      <a href="#top">All Deals</a>
+    </div>
+  </nav>
+
+  <div class="hero-body" id="top">
+    <span class="pill">Hand-picked · No spam</span>
+    <h1>The gear I <span class="grad">actually use</span>.</h1>
+    <p class="sub">A short list of things worth your money — and a few that aren't. Every link below is an affiliate link. <strong>It costs you nothing extra</strong> and it keeps this list free.</p>
+    <div class="cta-row">
+      <a class="btn primary" href="#deals">Browse the deals</a>
+      <a class="btn ghost" href="#about">How this works</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="deals" class="deals-section">
+    <div class="section-head">
+      <h2>All deals</h2>
+      <div class="filter-bar" id="filterBar"></div>
+    </div>
+    <div id="dealGrid" class="grid" aria-live="polite"></div>
+    <p id="emptyMsg" class="empty" hidden>No deals in this category yet — check back soon.</p>
+  </section>
+
+  <section id="about" class="about">
+    <div class="about-card">
+      <h2>How this makes money (and why it's free for you)</h2>
+      <p>Links on this page carry an <strong>affiliate tag</strong>. If you click one and buy something, the retailer pays me a small commission. <strong>Your price is identical</strong> — the money comes out of the retailer's marketing budget, not your pocket.</p>
+      <div class="pillars">
+        <div class="pillar">
+          <span class="p-ico">🏷️</span>
+          <h3>Free for you</h3>
+          <p>No markups, no "influencer price" nonsense. You pay the advertised price.</p>
+        </div>
+        <div class="pillar">
+          <span class="p-ico">⭐</span>
+          <h3>Hand-picked</h3>
+          <p>Only things that are genuinely good, not whatever paid the most commission.</p>
+        </div>
+        <div class="pillar">
+          <span class="p-ico">🔗</span>
+          <h3>Honest links</h3>
+          <p>Outlinks are marked. You always know when you're clicking a sponsored link.</p>
+        </div>
+      </div>
+      <p class="disclaimer">Links still using the placeholder <code>YOURTAG</code> are automatically hidden from the live site, so nothing broken reaches your friends until you swap in your real affiliate URLs.</p>
+      <p class="disclaimer">Not affiliated with any retailer mentioned. Prices and availability change — always check the retailer's page before buying.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <p>© <span id="yr"></span> DealsHub. Built as an affiliate showcase.</p>
+    <p class="fine">Prices and availability are set by the retailers. Some links are affiliate links, which help support this site at no cost to you.</p>
+  </div>
+</footer>
+
+<script src="links.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

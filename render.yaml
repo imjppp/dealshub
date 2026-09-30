@@ -1,0 +1,14 @@
+# Render — Static Site blueprint
+# How to deploy: see DEPLOY.md, or just push this repo to Render with
+# Environment = "Static Site", Build Command = (leave empty), Publish Path = .
+#
+# This render.yaml creates the static site declaratively if you prefer
+# "New > Blueprint" in the Render dashboard.
+
+services:
+  - type: web
+    name: dealshub
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: true
