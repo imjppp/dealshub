@@ -5,15 +5,17 @@
 // works on definitions of nodes that are about to be created). So settings live in a sidecar JSON file next
 // to the document, keyed by node id, with a geometry signature as a fallback match.
 //
-//   <document>.embroidery.json   { version, defaults:{...}, export:{...}, objects:{ "<nodeId>": {sig, params} } }
-// Unsaved documents: <Desktop>/untitled.embroidery.json.
+//   <allowed folder>/<document title>.embroidery.json   { version, defaults:{...}, export:{...}, objects:{ "<nodeId>": {sig, params} } }
+// (the folder must be one scripts are allowed to use - Settings > Scripting > File System access).
 
 export const SIDECAR_VERSION = 1;
 
 export function sidecarPath(info) {
-  if (info.path) return info.path.replace(/\.[^./\\]+$/, '') + '.embroidery.json';
-  const base = (info.desktop || '').replace(/[/\\]$/, '');
-  return (base ? base + '/' : '') + 'untitled.embroidery.json';
+  // Scripts may only touch folders allowed in Settings > Scripting, so the file goes in the folder the
+  // adapter picked (next to the document if that folder is allowed, otherwise the first allowed folder).
+  const title = String(info.title || 'untitled').replace(/\.[^.]*$/, '').replace(/[^\w .()-]+/g, '_') || 'untitled';
+  const dir = (info.saveDir || (info.path ? info.path.replace(/[/\\][^/\\]*$/, '') : '') || info.desktop || '').replace(/[/\\]$/, '');
+  return (dir ? dir + '/' : '') + title + '.embroidery.json';
 }
 
 export function emptyStore() { return { version: SIDECAR_VERSION, defaults: {}, export: {}, objects: {} }; }

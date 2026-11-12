@@ -24,6 +24,42 @@ export const HOOPS = [
   { name: '240 x 150 mm', w: 240, h: 150 },
 ];
 
+/** Friendly machine names -> format keys. */
+export const FORMAT_CHOICES = [
+  { key: 'pes1', label: 'Brother / Babylock / Bernina (.pes)' },
+  { key: 'jef', label: 'Janome (.jef)' },
+  { key: 'vp3', label: 'Husqvarna Viking / Pfaff (.vp3)' },
+  { key: 'dst', label: 'Tajima / most industrial machines (.dst)' },
+  { key: 'exp', label: 'Melco (.exp)' },
+  { key: 'pes6', label: 'Brother PES, newer version 6 (.pes)' },
+  { key: 'pec', label: 'Brother PEC (.pec)' },
+  { key: 'xxx', label: 'Singer / Compucon (.xxx)' },
+  { key: 'u01', label: 'Barudan (.u01)' },
+];
+
+/** Density presets: label -> {rowSpacing (fill), satinSpacing} in mm. "Keep" leaves the numbers alone. */
+export const DENSITY_PRESETS = [
+  ['Keep the numbers below', null],
+  ['Light (0.35 mm rows)', { rowSpacing: 0.35, satinSpacing: 0.5 }],
+  ['Normal (0.25 mm rows)', { rowSpacing: 0.25, satinSpacing: 0.4 }],
+  ['Dense (0.18 mm rows)', { rowSpacing: 0.18, satinSpacing: 0.3 }],
+];
+
+/** Global plan/machine options (shown behind "More options" on the export screen). */
+export function planFields(p = {}) {
+  const v = { optimise: true, trimThreshold: 3, stitchJoinMax: 0.6, tieIn: true, tieOff: true, tieLength: 0.6, minStitch: 0.1, palette: PALETTES[0], ...p };
+  return [
+    { id: 'optimise', type: 'check', label: 'Optimise: group by colour and shorten travel (fewer colour changes and jumps)', group: 'Order', value: v.optimise },
+    { id: 'trimThreshold', type: 'number', label: 'Trim the thread when the machine jumps further than', group: 'Jumps and trims', unit: 'mm', min: 0.5, max: 100, value: v.trimThreshold },
+    { id: 'stitchJoinMax', type: 'number', label: 'Gaps up to this are just stitched across (no jump)', group: 'Jumps and trims', unit: 'mm', min: 0, max: 5, value: v.stitchJoinMax },
+    { id: 'tieIn', type: 'check', label: 'Lock stitches at the start of each run (tie-in)', group: 'Lock stitches', value: v.tieIn },
+    { id: 'tieOff', type: 'check', label: 'Lock stitches at the end of each run (tie-off)', group: 'Lock stitches', value: v.tieOff },
+    { id: 'tieLength', type: 'number', label: 'Lock stitch length', group: 'Lock stitches', unit: 'mm', min: 0.2, max: 2, value: v.tieLength },
+    { id: 'minStitch', type: 'number', label: 'Drop stitches shorter than', group: 'Stitch limits', unit: 'mm', min: 0, max: 1, value: v.minStitch },
+    { id: 'palette', type: 'combo', label: 'Match thread colours to a brand', group: 'Thread colours', items: PALETTES, value: v.palette },
+  ];
+}
+
 export const PALETTES = ['None (exact colours)', 'Madeira (approx.)', 'Isacord (approx.)', 'Robison-Anton (approx.)'];
 
 /** Fields for the "Params" dialog. Values come from params (mm/deg). */

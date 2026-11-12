@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createAdapter, patternToLines } from '../src/affinity/adapter.js';
+import { createAdapter, patternToLines, ACTIONS } from '../src/affinity/adapter.js';
 import { toEngineShape, shapeSignature, pxToDu } from '../src/affinity/convert.js';
 import { sidecarPath, loadStore, saveStore, paramsFor, setParams, emptyStore } from '../src/affinity/storage.js';
 import { paramFields, paramsFromDialog } from '../src/affinity/ui-spec.js';
@@ -11,7 +11,7 @@ const mm = (v) => (v * DPI) / 25.4; // mm -> px
 
 function fakeSdk(script = {}) {
   const files = new Map(), alerts = [], dialogs = [];
-  const raw = (id, curves, extra = {}) => ({ nodeId: id, name: '', curves, fill: null, stroke: null, bbox: [0, 0, 10, 10], ...extra });
+  const raw = (id, curves, extra = {}) => ({ nodeId: String(id), name: '', curves, fill: null, stroke: null, bbox: [0, 0, 10, 10], ...extra });
   const square = (s, x = 0) => [[mm(x), 0], [mm(x + s), 0], [mm(x + s), mm(s)], [mm(x), mm(s)]];
   const shapes = script.shapes ?? [
     raw(1, [{ closed: true, points: square(20), nodes: square(20) }], { fill: { rgb: 0xff0000, alpha: 1 }, stroke: { rgb: 0x0000ff, alpha: 1, weightPx: mm(3) } }),
@@ -20,14 +20,16 @@ function fakeSdk(script = {}) {
   const sdk = {
     PREVIEW_NAME: 'Embroidery preview',
     previews: [], removed: 0, files, alerts, dialogs,
-    getDocumentInfo: () => script.noDoc ? null : { title: 'Logo.afdesign', path: '/docs/Logo.afdesign', dpi: DPI, uuid: 'u', desktop: '/desk' },
+    getDocumentInfo: () => script.noDoc ? null : { title: 'Logo.afdesign', path: script.docPath ?? '/Users/jp/Desktop/Logo.afdesign', dpi: DPI, uuid: 'u', desktop: '/Users/jp/Desktop' },
+    getEnvironment: () => ({ fileSystem: script.fileSystem ?? true, roots: script.roots ?? ['/Users/jp/Desktop'], desktop: '/Users/jp/Desktop', sdkVersion: 'test' }),
+    countSelection: () => (script.selection ?? shapes).length,
     readSelection: () => script.selection ?? shapes,
     readAll: () => shapes,
+    diagnose: () => 'DIAGNOSTIC TEXT',
     runDialog: (title, fields) => {
       dialogs.push({ title, fields });
       const h = script.dialogs?.find((d) => title.startsWith(d.title));
-      if (!h) return null;
-      if (h.cancel) return null;
+      if (!h || h.cancel) return null;
       const out = {};
       for (const f of fields) out[f.id] = f.id in (h.values || {}) ? h.values[f.id] : f.value;
       return out;
@@ -54,60 +56,20 @@ test('convert: px -> design units, closed shapes, bezier flattening, colours, st
   assert.equal(toEngineShape({ ...sq, fill: { rgb: 0, alpha: 0 } }, DPI).fill, null, 'transparent fill ignored');
 });
 
-test('export workflow: dialogs -> plan -> file bytes + thread list + sidecar', () => {
-  const sdk = fakeSdk({ dialogs: [
-    { title: 'Export embroidery -', values: {} },
-    { title: 'Export embroidery', values: { format: 'Husqvarna/Pfaff VP3 (.vp3)', path: '/out/logo.vp3', scope: 'Whole page', hoop: '100 x 100 mm' } },
-  ].reverse() });
-  createAdapter(sdk).exportEmbroidery();
-  const bytes = sdk.files.get('/out/logo.vp3');
-  assert.ok(bytes instanceof Uint8Array && bytes.length > 500);
-  assert.equal(String.fromCharCode(...bytes.subarray(0, 5)), '%vsm%');
-  assert.match(sdk.files.get('/out/logo-threads.txt'), /Thread list/);
-  const store = JSON.parse(sdk.files.get('/docs/Logo.embroidery.json'));
-  assert.equal(store.export.format, 'Husqvarna/Pfaff VP3 (.vp3)');
-  const confirm = sdk.dialogs.find((d) => d.title.includes('confirm'));
-  assert.ok(confirm.fields.some((f) => f.label === 'Hoop' && /fits 100/.test(f.value)));
-  assert.match(sdk.alerts.at(-1), /Wrote \d+ bytes/);
-});
-
-test('export: hoop too small is flagged; cancel writes nothing; no document handled', () => {
-  const sdk = fakeSdk({ dialogs: [{ title: 'Export embroidery -' }, { title: 'Export embroidery', values: { path: '/o.dst', format: 'Tajima DST (.dst)', hoop: '100 x 100 mm' } }].reverse(), shapes: [{ nodeId: 5, name: '', curves: [{ closed: true, points: [[0, 0], [mm(150), 0], [mm(150), mm(20)], [0, mm(20)]] }], fill: { rgb: 1, alpha: 1 }, stroke: null, bbox: [0, 0, 1, 1] }] });
-  createAdapter(sdk).exportEmbroidery();
-  assert.ok(sdk.dialogs.find((d) => d.title.includes('confirm')).fields.some((f) => /DOES NOT FIT/.test(f.value)));
-  const cancelled = fakeSdk({ dialogs: [{ title: 'Export embroidery', cancel: true }] });
-  createAdapter(cancelled).exportEmbroidery();
-  assert.equal(cancelled.files.size, 0);
-  const nodoc = fakeSdk({ noDoc: true });
-  createAdapter(nodoc).exportEmbroidery();
-  assert.match(nodoc.alerts[0], /Open a document/);
-});
-
-test('params workflow stores per-object settings; export honours them', () => {
-  const sdk = fakeSdk({ dialogs: [{ title: 'Embroidery params', values: { type: 'Fill (tatami)', fillAngle: 45, rowSpacing: 0.5, threadColor: '00ff00' } }] });
-  createAdapter(sdk).editParams();
-  const store = JSON.parse(sdk.files.get('/docs/Logo.embroidery.json'));
-  assert.equal(Object.keys(store.objects).length, 2);
-  const p = store.objects['1'].params;
-  assert.equal(p.type, 'fill'); assert.equal(p.fillAngle, 45); assert.equal(p.threadColor, '#00ff00');
-  // preview picks them up: one green fill block + ...
-  createAdapter(sdk).preview();
-  const colours = new Set(sdk.previews[0].map((l) => l.rgb));
-  assert.ok(colours.has(0x00ff00));
-});
-
 test('storage: sidecar path, id/signature matching, corrupt file tolerance', () => {
-  assert.equal(sidecarPath({ path: '/a/b/Logo.afdesign' }), '/a/b/Logo.embroidery.json');
-  assert.equal(sidecarPath({ path: '', desktop: '/desk' }), '/desk/untitled.embroidery.json');
+  assert.equal(sidecarPath({ title: 'Logo.afdesign', path: '/a/b/Logo.afdesign' }), '/a/b/Logo.embroidery.json');
+  assert.equal(sidecarPath({ title: 'Logo', path: '/a/b/Logo.afdesign', saveDir: '/allowed' }), '/allowed/Logo.embroidery.json');
+  assert.equal(sidecarPath({ title: '', path: '', desktop: '/desk' }), '/desk/untitled.embroidery.json');
   const st = emptyStore(); st.defaults = { stitchLength: 3 };
   setParams(st, 7, 'sigA', { type: 'running' });
   assert.deepEqual(paramsFor(st, 7, 'sigA'), { stitchLength: 3, type: 'running' });
   assert.equal(paramsFor(st, 99, 'sigA').type, 'running', 'falls back to signature when the id changed');
   assert.equal(paramsFor(st, 99, 'zzz').type, undefined);
-  const sdk = fakeSdk(); sdk.files.set('/docs/Logo.embroidery.json', '{not json');
-  assert.deepEqual(loadStore(sdk, sdk.getDocumentInfo()), emptyStore());
-  saveStore(sdk, sdk.getDocumentInfo(), st);
-  assert.equal(loadStore(sdk, sdk.getDocumentInfo()).objects['7'].params.type, 'running');
+  const sdk = fakeSdk(); const info = { ...sdk.getDocumentInfo(), saveDir: '/Users/jp/Desktop' };
+  sdk.files.set('/Users/jp/Desktop/Logo.embroidery.json', '{not json');
+  assert.deepEqual(loadStore(sdk, info), emptyStore());
+  saveStore(sdk, info, st);
+  assert.equal(loadStore(sdk, info).objects['7'].params.type, 'running');
 });
 
 test('ui-spec: field list covers all params; dialog result round-trips', () => {
@@ -118,6 +80,88 @@ test('ui-spec: field list covers all params; dialog result round-trips', () => {
   const back = paramsFromDialog(res);
   assert.equal(back.type, 'satin'); assert.equal(back.threadColor, null);
   assert.equal(paramsFromDialog({ ...res, threadColor: 'abc' }).threadColor, null);
+});
+
+test('make a file: friendly dialog -> file in the allowed folder, summary, remembered choices', () => {
+  const sdk = fakeSdk({ dialogs: [{ title: 'Embroidery - make a file', values: { format: 'Husqvarna Viking / Pfaff (.vp3)', name: 'My Logo', hoop: '100 x 100 mm' } }] });
+  createAdapter(sdk).makeFile();
+  const bytes = sdk.files.get('/Users/jp/Desktop/My Logo.vp3');
+  assert.ok(bytes instanceof Uint8Array && bytes.length > 500);
+  assert.equal(String.fromCharCode(...bytes.subarray(0, 5)), '%vsm%');
+  assert.match(sdk.alerts.at(-1), /Saved My Logo\.vp3/);
+  assert.match(sdk.alerts.at(-1), /Fits your 100 x 100 mm hoop/);
+  const store = JSON.parse(sdk.files.get('/Users/jp/Desktop/Logo.embroidery.json'));
+  assert.equal(store.export.name, 'My Logo');
+  const dlg = sdk.dialogs[0].fields;
+  assert.ok(dlg.some((f) => f.id === 'where' && f.value === '/Users/jp/Desktop'), 'tells the user where it saves');
+  assert.ok(!dlg.some((f) => f.id === 'path'), 'no path to type');
+});
+
+test('make a file: hoop warning, cancel, and "more options" reach the plan', () => {
+  const big = [{ nodeId: '5', name: '', curves: [{ closed: true, points: [[0, 0], [mm(150), 0], [mm(150), mm(20)], [0, mm(20)]] }], fill: { rgb: 1, alpha: 1 }, stroke: null, bbox: [0, 0, 1, 1] }];
+  const sdk = fakeSdk({ shapes: big, dialogs: [{ title: 'Embroidery - make a file', values: { hoop: '100 x 100 mm', format: 'Tajima / most industrial machines (.dst)' } }] });
+  createAdapter(sdk).makeFile();
+  assert.match(sdk.alerts.at(-1), /WARNING: too big/);
+  const c = fakeSdk({ dialogs: [{ title: 'Embroidery - make a file', cancel: true }] });
+  createAdapter(c).makeFile();
+  assert.equal(c.files.size, 0);
+  const m = fakeSdk({ dialogs: [{ title: 'Embroidery - make a file', values: { more: true, format: 'Janome (.jef)' } }, { title: 'Embroidery - more options', values: { tieIn: false, tieOff: false, optimise: false } }] });
+  createAdapter(m).makeFile();
+  const stored = JSON.parse(m.files.get('/Users/jp/Desktop/Logo.embroidery.json'));
+  assert.equal(stored.export.plan.tieIn, false);
+  assert.ok(m.files.get('/Users/jp/Desktop/Logo.jef').length > 100);
+});
+
+test('permissions and documents are explained in plain language', () => {
+  const noperm = fakeSdk({ fileSystem: false });
+  createAdapter(noperm).makeFile();
+  assert.match(noperm.alerts[0], /Access the file system/); assert.match(noperm.alerts[0], /File System access/);
+  assert.equal(noperm.files.size, 0);
+  const nodoc = fakeSdk({ noDoc: true });
+  createAdapter(nodoc).menu();
+  assert.match(nodoc.alerts[0], /Open a document/);
+  const noRoots = fakeSdk({ roots: [], docPath: '/Elsewhere/doc.afdesign' });
+  createAdapter(noRoots).makeFile();
+  assert.equal(noRoots.dialogs[0].fields.find((f) => f.id === 'where').value, '/Users/jp/Desktop', 'falls back to the Desktop');
+  const outside = fakeSdk({ dialogs: [{ title: 'Embroidery - make a file' }], docPath: '/Elsewhere/doc.afdesign' });
+  createAdapter(outside).makeFile();
+  assert.ok(outside.files.has('/Users/jp/Desktop/Logo.pes'), 'saves in an allowed folder, not next to a document outside them');
+});
+
+test('settings: density preset + every setting editable; per-shape or global default; preview uses them', () => {
+  const sdk = fakeSdk({ dialogs: [{ title: 'Embroidery settings', values: { densityPreset: 'Dense (0.18 mm rows)', type: 'Fill (tatami)', fillAngle: 45, stitchLength: 3.5, threadColor: '00ff00' } }] });
+  createAdapter(sdk).settings();
+  const ids = sdk.dialogs[0].fields.map((f) => f.id);
+  for (const id of ['rowSpacing', 'maxStitchLength', 'stagger', 'fillAngle', 'expand', 'fillUnderlay', 'satinSpacing', 'satinPullComp', 'stitchLength', 'bean', 'satinContour', 'densityPreset', 'applyTo']) assert.ok(ids.includes(id), id);
+  const store = JSON.parse(sdk.files.get('/Users/jp/Desktop/Logo.embroidery.json'));
+  assert.equal(Object.keys(store.objects).length, 2);
+  const p = store.objects['1'].params;
+  assert.equal(p.type, 'fill'); assert.equal(p.fillAngle, 45); assert.equal(p.rowSpacing, 0.18); assert.equal(p.satinSpacing, 0.3); assert.equal(p.stitchLength, 3.5); assert.equal(p.threadColor, '#00ff00');
+  createAdapter(sdk).preview();
+  assert.ok(new Set(sdk.previews[0].map((l) => l.rgb)).has(0x00ff00));
+  const g = fakeSdk({ selection: [], dialogs: [{ title: 'Embroidery settings', values: { rowSpacing: 0.4 } }] });
+  createAdapter(g).settings();
+  const gs = JSON.parse(g.files.get('/Users/jp/Desktop/Logo.embroidery.json'));
+  assert.equal(gs.defaults.rowSpacing, 0.4); assert.deepEqual(gs.objects, {});
+});
+
+test('menu: shows selection status and dispatches to every action', () => {
+  const run = (action, extra = []) => {
+    const sdk = fakeSdk({ dialogs: [{ title: 'Embroidery', values: { a: action } }, ...extra] });
+    createAdapter(sdk).menu();
+    return sdk;
+  };
+  const m = run(ACTIONS.threads);
+  assert.match(m.dialogs[0].fields.find((f) => f.id === 'status').value, /3|2 shapes selected/);
+  assert.match(m.files.get('/Users/jp/Desktop/Logo-threads.txt'), /#ff0000/);
+  assert.ok(run(ACTIONS.preview).previews.length === 1);
+  assert.equal(run(ACTIONS.clear).removed, 1);
+  assert.equal(run(ACTIONS.diagnose).files.get('/Users/jp/Desktop/embroidery-diagnostics.txt'), 'DIAGNOSTIC TEXT');
+  const mk = run(ACTIONS.make, [{ title: 'Embroidery - make a file' }]);
+  assert.ok(mk.files.has('/Users/jp/Desktop/Logo.pes'));
+  const nothing = fakeSdk({ selection: [], dialogs: [{ title: 'Embroidery' }] });
+  createAdapter(nothing).menu();
+  assert.match(nothing.dialogs[0].fields.find((f) => f.id === 'status').value, /whole page/);
 });
 
 test('preview: lines per thread run in px; clear removes layer; selection empty falls back to page', () => {
@@ -136,9 +180,4 @@ test('preview: lines per thread run in px; clear removes layer; selection empty 
   assert.equal(l2.length, 2); assert.deepEqual(l2.map((l) => l.rgb), [0xff0000, 0x00ff00]);
 });
 
-test('thread list + menu dispatch', () => {
-  const sdk = fakeSdk({ dialogs: [{ title: 'Thread list' }, { title: 'Embroidery', values: { a: 'Thread list' } }].reverse() });
-  createAdapter(sdk).menu();
-  assert.match(sdk.files.get('/docs/Logo-threads.txt'), /#ff0000/);
-});
 void CMD; void shapeSignature;

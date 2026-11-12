@@ -1,3 +1,5 @@
+> **Superseded:** the main script (`dist/embroidery.js`) has a "Send a diagnostic report" menu choice that covers spikes 1 and 2 and the environment checks; spikes 3, 4 and 6 already passed. These files remain for reference only. See `START-HERE.md`.
+
 # Spike scripts - run these first
 
 Six small, **self-contained** scripts. Each tests one SDK assumption the plugin makes, prints what it found, shows the

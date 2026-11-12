@@ -1,5 +1,7 @@
 # MORNING.md
 
+> **Update:** the six scripts were merged into ONE friendly script, `dist/embroidery.js`, with a built-in diagnostic report in place of the spikes. **Read `START-HERE.md` first**; the step lists below pre-date that and mention the old spikes/scripts.
+
 Overnight build of an Affinity Studio embroidery plugin (SDK 3.3.3, pure JavaScript). Branch
 `claude/affinity-embroidery-plugin-1qyble`, folder `affinity-embroidery/`. No PR was opened.
 

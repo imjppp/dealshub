@@ -23,7 +23,7 @@ const { UnitType } = require('/units.js');
 const { BlendMode } = require('affinity:common');
 const { CurveApi, PolygonApi } = require('affinity:geometry');
 const { UiApi } = require('affinity:ui');
-const { ApplicationApi } = require('affinity:application');
+const { ApplicationApi, EnvironmentApi, EnvironmentPermission } = require('affinity:application');
 const { FileSystemApi } = require('affinity:fs');
 
 const { utf8Encode, utf8Decode } = require('../core/bytes.js');
@@ -36,6 +36,24 @@ const xy = (p) => [p.x, p.y];
 const ev = (e) => (e !== null && typeof e === 'object' && 'value' in e ? e.value : e);
 
 function doc() { return Document.current; }
+
+/** What scripts are allowed to do (Settings > Scripting) and which folders they may touch. */
+function getEnvironment() {
+  const roots = [];
+  safe(() => EnvironmentApi.enumerateFileSystemRoots((r) => { roots.push(r); return 0; /* EnumerationResult.Continue */ }), null);
+  return {
+    fileSystem: safe(() => EnvironmentApi.hasPermission(EnvironmentPermission.FileSystem), false),
+    roots,
+    desktop: safe(() => ApplicationApi.getUserDesktopPath(), ''),
+    sdkVersion: safe(() => EnvironmentApi.getSDKVersionStr(), ''),
+  };
+}
+
+function countSelection() {
+  const d = doc(); if (!d) return 0;
+  const nodes = []; collect(d.selection.nodes.toArray(), nodes);
+  return nodes.length;
+}
 
 function getDocumentInfo() {
   const d = doc();
@@ -111,6 +129,42 @@ function readAll(tolPx) {
   const d = doc(); if (!d) return [];
   const nodes = []; collect(d.currentSpread.children.toArray().filter((n) => safe(() => n.userDescription, '') !== PREVIEW_NAME), nodes);
   return nodes.map((n) => readNode(n, d.dpi, tolPx)).filter(Boolean);
+}
+
+
+/** Plain-text report of what the SDK returns for the selection (replaces the old spike scripts). */
+function diagnose(tolPx) {
+  const out = [];
+  const log = (...a) => out.push(a.map((x) => (typeof x === 'string' ? x : JSON.stringify(x, (k, v) => (typeof v === 'bigint' ? v.toString() + 'n' : v)))).join(' '));
+  const attempt = (label, fn) => { try { const r = fn(); log('OK  ', label, r === undefined ? '' : r); return r; } catch (e) { log('FAIL', label + ':', e && e.message ? e.message : String(e)); return undefined; } };
+  const r1 = (v) => Math.round(v * 100) / 100;
+  const P = (p) => `(${r1(p.x)}, ${r1(p.y)})`;
+  const env = getEnvironment();
+  log('environment:', env);
+  const d = doc();
+  if (!d) { log('no document open'); return out.join('\n'); }
+  log('document:', d.title, 'dpi=', d.dpi, 'units=', String(d.units));
+  const sel = []; collect(d.selection.nodes.toArray(), sel);
+  const all = []; attempt('collect all on spread', () => { collect(d.currentSpread.children.toArray(), all); return all.length; });
+  const nodes = sel.length ? sel : all;
+  log(sel.length ? 'using the SELECTION' : 'nothing selected - using ALL shapes on the page', nodes.length);
+  for (const node of nodes.slice(0, 6)) {
+    log('---- shape', node.nodeId);
+    const xf = attempt('localToSpreadTransform', () => node.localToSpreadTransform);
+    if (xf) log('   xf.data =', xf.data);
+    attempt('spread visible box', () => { const r = node.getSpreadVisibleBox(); return [r1(r.x), r1(r.y), r1(r.width), r1(r.height)]; });
+    attempt('curvesInterface.domainTransform', () => { const t = node.curvesInterface.domainTransform; return t && t.data; });
+    let i = 0;
+    for (const curve of node.curvesInterface.polyCurve.curves) {
+      log(`  curve #${i++}: closed=${curve.isClosed} points=${curve.pointCount} nodes=${curve.nodeCount}`);
+      attempt('   nodes local->spread', () => curve.nodes.slice(0, 4).map((nd) => P(nd.position) + ' -> ' + (xf ? P(xf.applyToPoint(nd.position)) : '?')));
+      attempt('   bezier count', () => [...curve.beziers].length);
+      attempt('   generatePolygon: count, first 3 local', () => { const poly = CurveApi.generatePolygon(curve.handle, tolPx || 1); const pts = []; PolygonApi.enumeratePoints(poly, (p) => { pts.push(p); return 0; }); return [pts.length, pts.slice(0, 3).map(P).join(' ')]; });
+    }
+    attempt('fill', () => { const c = node.hasBrushFill ? node.brushFillDescriptor.fill.colour.rgba8 : null; return c ? `#${[c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, '0')).join('')} a=${c.alpha}` : 'none'; });
+    attempt('stroke', () => { if (!node.hasPenFill) return 'none'; const c = node.penFillDescriptor.fill.colour.rgba8; return `#${[c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, '0')).join('')} weight(px)=${node.lineWeight} (= ${r1(node.lineWeight * 25.4 / d.dpi)} mm) visible=${node.isLineStyleVisible}`; });
+  }
+  return out.join('\n');
 }
 
 // ------------------------------------------------------------------ dialogs
@@ -228,4 +282,4 @@ function removePreview() {
   return found.length;
 }
 
-module.exports = { getDocumentInfo, readSelection, readAll, runDialog, alertBox, confirmBox, chooseFile, writeFileBytes, writeText, readText, fileExists, makeDirs, addPreview, removePreview, PREVIEW_NAME };
+module.exports = { getEnvironment, countSelection, diagnose, getDocumentInfo, readSelection, readAll, runDialog, alertBox, confirmBox, chooseFile, writeFileBytes, writeText, readText, fileExists, makeDirs, addPreview, removePreview, PREVIEW_NAME };

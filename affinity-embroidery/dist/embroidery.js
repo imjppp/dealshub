@@ -1,6 +1,6 @@
 /**
- * name: Embroidery (menu)
- * description: Embroidery tools in one script: edit stitch params, export machine embroidery files, preview stitches, thread list.
+ * name: Embroidery
+ * description: Turn shapes into machine embroidery files: make a file, preview stitches, change stitch settings, thread list.
  * version: 0.1.0
  * author: affinity-embroidery
  */
@@ -189,7 +189,7 @@ var require_sdk = __commonJS({
     var { BlendMode } = require("affinity:common");
     var { CurveApi, PolygonApi } = require("affinity:geometry");
     var { UiApi } = require("affinity:ui");
-    var { ApplicationApi } = require("affinity:application");
+    var { ApplicationApi, EnvironmentApi, EnvironmentPermission } = require("affinity:application");
     var { FileSystemApi } = require("affinity:fs");
     var { utf8Encode: utf8Encode2, utf8Decode: utf8Decode2 } = (init_bytes(), __toCommonJS(bytes_exports));
     var PREVIEW_NAME = "Embroidery preview";
@@ -198,6 +198,26 @@ var require_sdk = __commonJS({
     var ev = (e) => e !== null && typeof e === "object" && "value" in e ? e.value : e;
     function doc() {
       return Document.current;
+    }
+    function getEnvironment() {
+      const roots = [];
+      safe(() => EnvironmentApi.enumerateFileSystemRoots((r2) => {
+        roots.push(r2);
+        return 0;
+      }), null);
+      return {
+        fileSystem: safe(() => EnvironmentApi.hasPermission(EnvironmentPermission.FileSystem), false),
+        roots,
+        desktop: safe(() => ApplicationApi.getUserDesktopPath(), ""),
+        sdkVersion: safe(() => EnvironmentApi.getSDKVersionStr(), "")
+      };
+    }
+    function countSelection() {
+      const d = doc();
+      if (!d) return 0;
+      const nodes = [];
+      collect(d.selection.nodes.toArray(), nodes);
+      return nodes.length;
     }
     function getDocumentInfo() {
       const d = doc();
@@ -296,6 +316,77 @@ var require_sdk = __commonJS({
       const nodes = [];
       collect(d.currentSpread.children.toArray().filter((n) => safe(() => n.userDescription, "") !== PREVIEW_NAME), nodes);
       return nodes.map((n) => readNode(n, d.dpi, tolPx)).filter(Boolean);
+    }
+    function diagnose(tolPx) {
+      const out = [];
+      const log = (...a) => out.push(a.map((x) => typeof x === "string" ? x : JSON.stringify(x, (k, v) => typeof v === "bigint" ? v.toString() + "n" : v)).join(" "));
+      const attempt = (label, fn) => {
+        try {
+          const r2 = fn();
+          log("OK  ", label, r2 === void 0 ? "" : r2);
+          return r2;
+        } catch (e) {
+          log("FAIL", label + ":", e && e.message ? e.message : String(e));
+          return void 0;
+        }
+      };
+      const r1 = (v) => Math.round(v * 100) / 100;
+      const P = (p) => `(${r1(p.x)}, ${r1(p.y)})`;
+      const env = getEnvironment();
+      log("environment:", env);
+      const d = doc();
+      if (!d) {
+        log("no document open");
+        return out.join("\n");
+      }
+      log("document:", d.title, "dpi=", d.dpi, "units=", String(d.units));
+      const sel = [];
+      collect(d.selection.nodes.toArray(), sel);
+      const all = [];
+      attempt("collect all on spread", () => {
+        collect(d.currentSpread.children.toArray(), all);
+        return all.length;
+      });
+      const nodes = sel.length ? sel : all;
+      log(sel.length ? "using the SELECTION" : "nothing selected - using ALL shapes on the page", nodes.length);
+      for (const node of nodes.slice(0, 6)) {
+        log("---- shape", node.nodeId);
+        const xf = attempt("localToSpreadTransform", () => node.localToSpreadTransform);
+        if (xf) log("   xf.data =", xf.data);
+        attempt("spread visible box", () => {
+          const r2 = node.getSpreadVisibleBox();
+          return [r1(r2.x), r1(r2.y), r1(r2.width), r1(r2.height)];
+        });
+        attempt("curvesInterface.domainTransform", () => {
+          const t = node.curvesInterface.domainTransform;
+          return t && t.data;
+        });
+        let i = 0;
+        for (const curve of node.curvesInterface.polyCurve.curves) {
+          log(`  curve #${i++}: closed=${curve.isClosed} points=${curve.pointCount} nodes=${curve.nodeCount}`);
+          attempt("   nodes local->spread", () => curve.nodes.slice(0, 4).map((nd) => P(nd.position) + " -> " + (xf ? P(xf.applyToPoint(nd.position)) : "?")));
+          attempt("   bezier count", () => [...curve.beziers].length);
+          attempt("   generatePolygon: count, first 3 local", () => {
+            const poly = CurveApi.generatePolygon(curve.handle, tolPx || 1);
+            const pts = [];
+            PolygonApi.enumeratePoints(poly, (p) => {
+              pts.push(p);
+              return 0;
+            });
+            return [pts.length, pts.slice(0, 3).map(P).join(" ")];
+          });
+        }
+        attempt("fill", () => {
+          const c = node.hasBrushFill ? node.brushFillDescriptor.fill.colour.rgba8 : null;
+          return c ? `#${[c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, "0")).join("")} a=${c.alpha}` : "none";
+        });
+        attempt("stroke", () => {
+          if (!node.hasPenFill) return "none";
+          const c = node.penFillDescriptor.fill.colour.rgba8;
+          return `#${[c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, "0")).join("")} weight(px)=${node.lineWeight} (= ${r1(node.lineWeight * 25.4 / d.dpi)} mm) visible=${node.isLineStyleVisible}`;
+        });
+      }
+      return out.join("\n");
     }
     function runDialog(title, fields, width = 440) {
       const dlg = Dialog.create(title);
@@ -446,7 +537,7 @@ var require_sdk = __commonJS({
       d.executeCommand(DocumentCommand.createDeleteSelection(sel, true));
       return found.length;
     }
-    module3.exports = { getDocumentInfo, readSelection, readAll, runDialog, alertBox, confirmBox, chooseFile, writeFileBytes, writeText, readText, fileExists, makeDirs, addPreview, removePreview, PREVIEW_NAME };
+    module3.exports = { getEnvironment, countSelection, diagnose, getDocumentInfo, readSelection, readAll, runDialog, alertBox, confirmBox, chooseFile, writeFileBytes, writeText, readText, fileExists, makeDirs, addPreview, removePreview, PREVIEW_NAME };
   }
 });
 
@@ -8028,9 +8119,9 @@ var init_convert = __esm({
 
 // src/affinity/storage.js
 function sidecarPath(info) {
-  if (info.path) return info.path.replace(/\.[^./\\]+$/, "") + ".embroidery.json";
-  const base = (info.desktop || "").replace(/[/\\]$/, "");
-  return (base ? base + "/" : "") + "untitled.embroidery.json";
+  const title = String(info.title || "untitled").replace(/\.[^.]*$/, "").replace(/[^\w .()-]+/g, "_") || "untitled";
+  const dir = (info.saveDir || (info.path ? info.path.replace(/[/\\][^/\\]*$/, "") : "") || info.desktop || "").replace(/[/\\]$/, "");
+  return (dir ? dir + "/" : "") + title + ".embroidery.json";
 }
 function emptyStore() {
   return { version: SIDECAR_VERSION, defaults: {}, export: {}, objects: {} };
@@ -8066,6 +8157,19 @@ var init_storage = __esm({
 });
 
 // src/affinity/ui-spec.js
+function planFields(p = {}) {
+  const v = { optimise: true, trimThreshold: 3, stitchJoinMax: 0.6, tieIn: true, tieOff: true, tieLength: 0.6, minStitch: 0.1, palette: PALETTES[0], ...p };
+  return [
+    { id: "optimise", type: "check", label: "Optimise: group by colour and shorten travel (fewer colour changes and jumps)", group: "Order", value: v.optimise },
+    { id: "trimThreshold", type: "number", label: "Trim the thread when the machine jumps further than", group: "Jumps and trims", unit: "mm", min: 0.5, max: 100, value: v.trimThreshold },
+    { id: "stitchJoinMax", type: "number", label: "Gaps up to this are just stitched across (no jump)", group: "Jumps and trims", unit: "mm", min: 0, max: 5, value: v.stitchJoinMax },
+    { id: "tieIn", type: "check", label: "Lock stitches at the start of each run (tie-in)", group: "Lock stitches", value: v.tieIn },
+    { id: "tieOff", type: "check", label: "Lock stitches at the end of each run (tie-off)", group: "Lock stitches", value: v.tieOff },
+    { id: "tieLength", type: "number", label: "Lock stitch length", group: "Lock stitches", unit: "mm", min: 0.2, max: 2, value: v.tieLength },
+    { id: "minStitch", type: "number", label: "Drop stitches shorter than", group: "Stitch limits", unit: "mm", min: 0, max: 1, value: v.minStitch },
+    { id: "palette", type: "combo", label: "Match thread colours to a brand", group: "Thread colours", items: PALETTES, value: v.palette }
+  ];
+}
 function paramFields(p) {
   const v = { ...DEFAULTS, ...p };
   const n = (id, label, group, unit, min, max, precision = 2) => ({ id, type: "number", label, group, unit, min, max, value: v[id], precision });
@@ -8107,7 +8211,7 @@ function paramsFromDialog(res) {
   for (const k of ["repeats", "beanRepeats", "stagger"]) if (k in out) out[k] = Math.round(out[k]);
   return out;
 }
-var TYPE_ITEMS, typeLabel, typeValue, HOOPS, PALETTES, formatItems;
+var TYPE_ITEMS, typeLabel, typeValue, HOOPS, FORMAT_CHOICES, DENSITY_PRESETS, PALETTES;
 var init_ui_spec = __esm({
   "src/affinity/ui-spec.js"() {
     init_params();
@@ -8132,8 +8236,24 @@ var init_ui_spec = __esm({
       { name: "200 x 200 mm", w: 200, h: 200 },
       { name: "240 x 150 mm", w: 240, h: 150 }
     ];
+    FORMAT_CHOICES = [
+      { key: "pes1", label: "Brother / Babylock / Bernina (.pes)" },
+      { key: "jef", label: "Janome (.jef)" },
+      { key: "vp3", label: "Husqvarna Viking / Pfaff (.vp3)" },
+      { key: "dst", label: "Tajima / most industrial machines (.dst)" },
+      { key: "exp", label: "Melco (.exp)" },
+      { key: "pes6", label: "Brother PES, newer version 6 (.pes)" },
+      { key: "pec", label: "Brother PEC (.pec)" },
+      { key: "xxx", label: "Singer / Compucon (.xxx)" },
+      { key: "u01", label: "Barudan (.u01)" }
+    ];
+    DENSITY_PRESETS = [
+      ["Keep the numbers below", null],
+      ["Light (0.35 mm rows)", { rowSpacing: 0.35, satinSpacing: 0.5 }],
+      ["Normal (0.25 mm rows)", { rowSpacing: 0.25, satinSpacing: 0.4 }],
+      ["Dense (0.18 mm rows)", { rowSpacing: 0.18, satinSpacing: 0.3 }]
+    ];
     PALETTES = ["None (exact colours)", "Madeira (approx.)", "Isacord (approx.)", "Robison-Anton (approx.)"];
-    formatItems = () => Object.entries(FORMATS).map(([k, f]) => ({ key: k, label: `${f.label} (.${f.ext})` }));
   }
 });
 
@@ -8662,181 +8782,249 @@ var init_palette_robison_anton = __esm({
 // src/affinity/adapter.js
 var adapter_exports = {};
 __export(adapter_exports, {
+  ACTIONS: () => ACTIONS,
   createAdapter: () => createAdapter,
   patternToLines: () => patternToLines
 });
 function createAdapter(sdk2) {
-  function needDoc() {
+  function preflight({ needFiles = true } = {}) {
     const info = sdk2.getDocumentInfo();
     if (!info) {
-      sdk2.alertBox("Open a document first.");
+      sdk2.alertBox("Open a document first, with some shapes in it.");
       return null;
     }
-    return info;
+    const env = sdk2.getEnvironment();
+    if (needFiles && !env.fileSystem) {
+      sdk2.alertBox(NO_PERMISSION);
+      return null;
+    }
+    const roots = env.roots || [];
+    let saveDir = info.path && underAny(dirOf(info.path), roots) ? dirOf(info.path) : roots[0] || env.desktop || "";
+    saveDir = norm(saveDir);
+    info.saveDir = saveDir;
+    if (needFiles && !saveDir) {
+      sdk2.alertBox(NO_PERMISSION);
+      return null;
+    }
+    return { info, env, saveDir };
   }
   const tolPx = (info) => mmToPx(TOL_MM, info.dpi);
-  function gather(info, scope) {
-    return scope === "Selection" ? sdk2.readSelection(tolPx(info)) : sdk2.readAll(tolPx(info));
+  function gather(info, selectedOnly = true) {
+    const sel = selectedOnly ? sdk2.readSelection(tolPx(info)) : [];
+    return sel.length ? { raws: sel, usedSelection: true } : { raws: sdk2.readAll(tolPx(info)), usedSelection: false };
   }
   function build(info, store, raws, planOpts) {
     const shapes = raws.map((r2) => toEngineShape(r2, info.dpi, paramsFor(store, r2.nodeId, shapeSignature(r2, info.dpi)), { toleranceMm: TOL_MM }));
     const blocks = shapes.flatMap((s) => stitchShape(s));
     const { pattern, stats } = buildPattern(blocks, planOpts);
     pattern.meta.name = (info.title || "Untitled").replace(/\.[^.]*$/, "").slice(0, 16);
-    return { pattern, stats, shapes };
+    return { pattern, stats };
   }
-  function editParams() {
-    const info = needDoc();
-    if (!info) return;
-    const raws = sdk2.readSelection(tolPx(info));
+  const planOptsFrom = (saved = {}) => {
+    const pal = PALETTE_DATA[Math.max(0, PALETTES.indexOf(saved.palette))];
+    return {
+      optimise: saved.optimise ?? PLAN_DEFAULTS.optimise,
+      trimThreshold: saved.trimThreshold ?? PLAN_DEFAULTS.trimThreshold,
+      stitchJoinMax: saved.stitchJoinMax ?? PLAN_DEFAULTS.stitchJoinMax,
+      tieIn: saved.tieIn ?? true,
+      tieOff: saved.tieOff ?? true,
+      tieLength: saved.tieLength ?? PLAN_DEFAULTS.tieLength,
+      minStitch: saved.minStitch ?? PLAN_DEFAULTS.minStitch,
+      palette: pal ? loadPalette(pal) : null
+    };
+  };
+  const trySave = (info, store) => {
+    try {
+      saveStore(sdk2, info, store);
+      return "";
+    } catch (e) {
+      return `
+(Your settings could not be saved to a file: ${e && e.message ? e.message.split(" - ")[0] : e})`;
+    }
+  };
+  function makeFile() {
+    const pf = preflight();
+    if (!pf) return;
+    const { info, saveDir } = pf;
+    const store = loadStore(sdk2, info);
+    const last = store.export || {};
+    const nSel = sdk2.countSelection();
+    const fmtLabels = FORMAT_CHOICES.map((f) => f.label);
+    const fields = [
+      { id: "format", type: "combo", label: "Your machine / file type", group: "Make an embroidery file", items: fmtLabels, value: last.format || fmtLabels[0] },
+      { id: "name", type: "text", label: "File name", group: "Make an embroidery file", value: last.name || safeName(info.title) },
+      { id: "where", type: "static", label: "Saved in", group: "Make an embroidery file", value: saveDir },
+      { id: "hoop", type: "combo", label: "Check it fits my hoop", group: "Make an embroidery file", items: HOOPS.map((h) => h.name), value: last.hoop || HOOPS[0].name }
+    ];
+    if (nSel > 0) fields.push({ id: "selectedOnly", type: "check", label: `Only the ${nSel} selected shape${nSel > 1 ? "s" : ""} (untick for the whole page)`, group: "What to stitch", value: last.selectedOnly ?? true });
+    fields.push({ id: "more", type: "check", label: "Show more options next (trims, lock stitches, thread brands...)", group: "More", value: false });
+    const res = sdk2.runDialog("Embroidery - make a file", fields, 500);
+    if (!res) return;
+    let planSaved = store.export?.plan || {};
+    if (res.more) {
+      const p = sdk2.runDialog("Embroidery - more options", planFields(planSaved), 520);
+      if (!p) return;
+      planSaved = p;
+    }
+    const { raws, usedSelection } = gather(info, nSel > 0 ? res.selectedOnly : false);
     if (!raws.length) {
-      sdk2.alertBox("Select one or more vector shapes first.");
+      sdk2.alertBox("There are no shapes to stitch. Draw some shapes (or select the ones you want) and try again.");
       return;
     }
+    const { pattern, stats } = build(info, store, raws, planOptsFrom(planSaved));
+    if (!stats.stitches) {
+      sdk2.alertBox("Those shapes produced no stitches. Text must be converted to curves first, and shapes need a fill or a stroke.");
+      return;
+    }
+    const fmt = FORMAT_CHOICES.find((f) => f.label === res.format) || FORMAT_CHOICES[0];
+    const hoop = HOOPS.find((h) => h.name === res.hoop) || HOOPS[0];
+    const fileName = `${safeName(res.name)}.${FORMATS[fmt.key].ext}`;
+    const path = `${saveDir}/${fileName}`;
+    const bytes = FORMATS[fmt.key].write(pattern, {});
+    sdk2.writeFileBytes(path, bytes);
+    store.export = { format: fmt.label, name: safeName(res.name), hoop: hoop.name, selectedOnly: res.selectedOnly, plan: planSaved };
+    const warn = trySave(info, store);
+    const fits = !hoop.w || stats.widthMm <= hoop.w && stats.heightMm <= hoop.h;
+    sdk2.alertBox([
+      `Saved ${fileName}`,
+      `in ${saveDir}`,
+      "",
+      `${stats.stitches} stitches, ${stats.colors} thread colour${stats.colors === 1 ? "" : "s"}, ${stats.trims} trims`,
+      `Size ${stats.widthMm.toFixed(1)} x ${stats.heightMm.toFixed(1)} mm`,
+      hoop.w ? fits ? `Fits your ${hoop.name} hoop.` : `WARNING: too big for a ${hoop.name} hoop - resize the artwork or pick a bigger hoop.` : "",
+      usedSelection ? "" : "Used every shape on the page.",
+      "",
+      "Threads: " + stats.threads.map((t, i) => `${i + 1}) ${t.name && t.name !== t.hex ? t.name + " " : ""}${t.hex}`).join("   "),
+      warn
+    ].filter((l) => l !== "").join("\n"));
+  }
+  function preview() {
+    const pf = preflight({ needFiles: false });
+    if (!pf) return;
+    const { info } = pf;
     const store = loadStore(sdk2, info);
-    const first = paramsFor(store, raws[0].nodeId, shapeSignature(raws[0], info.dpi));
-    const res = sdk2.runDialog(`Embroidery params (${raws.length} object${raws.length > 1 ? "s" : ""})`, paramFields(first), 480);
+    const { raws } = gather(info, true);
+    if (!raws.length) {
+      sdk2.alertBox("There are no shapes to preview. Draw some shapes (or select the ones you want) first.");
+      return;
+    }
+    const { pattern, stats } = build(info, store, raws, { ...planOptsFrom(store.export?.plan), center: false });
+    sdk2.addPreview(patternToLines(pattern, info.dpi));
+    sdk2.alertBox(`Preview drawn on a layer called "${sdk2.PREVIEW_NAME}": ${stats.stitches} stitches, ${stats.colors} colour${stats.colors === 1 ? "" : "s"}.
+
+Choose "Remove the preview" when you are done.`);
+  }
+  function clearPreview() {
+    if (!preflight({ needFiles: false })) return;
+    const n = sdk2.removePreview();
+    sdk2.alertBox(n ? "Preview removed." : "There was no preview on this page.");
+  }
+  function settings() {
+    const pf = preflight();
+    if (!pf) return;
+    const { info } = pf;
+    const store = loadStore(sdk2, info);
+    const nSel = sdk2.countSelection();
+    const raws = nSel ? sdk2.readSelection(tolPx(info)) : [];
+    const first = raws.length ? paramsFor(store, raws[0].nodeId, shapeSignature(raws[0], info.dpi)) : { ...store.defaults };
+    const fields = [
+      { id: "applyTo", type: "buttons", label: "Apply to", group: "Who gets these settings", items: ["Selected shapes", "Every shape (new default)"], value: raws.length ? "Selected shapes" : "Every shape (new default)" },
+      { id: "densityPreset", type: "combo", label: "Density preset", group: "Density (how closely the stitches are packed)", items: DENSITY_PRESETS.map((d) => d[0]), value: DENSITY_PRESETS[0][0] },
+      ...paramFields(first)
+    ];
+    const res = sdk2.runDialog(raws.length ? `Embroidery settings (${raws.length} selected)` : "Embroidery settings (default for every shape)", fields, 520);
     if (!res) return;
     const patch2 = paramsFromDialog(res);
+    const preset = DENSITY_PRESETS.find((d) => d[0] === res.densityPreset)?.[1];
+    if (preset) Object.assign(patch2, preset);
+    if (res.applyTo === "Every shape (new default)" || !raws.length) {
+      store.defaults = { ...store.defaults, ...patch2 };
+      sdk2.alertBox("Saved as the default for every shape." + trySave(info, store));
+      return;
+    }
     for (const r2 of raws) {
       const sig = shapeSignature(r2, info.dpi);
       setParams(store, r2.nodeId, sig, { ...paramsFor(store, r2.nodeId, sig), ...patch2 });
     }
-    saveStore(sdk2, info, store);
-    sdk2.alertBox(`Saved stitch settings for ${raws.length} object(s) in ${baseOf(info.path || "untitled")}.embroidery.json`);
-  }
-  function exportEmbroidery() {
-    const info = needDoc();
-    if (!info) return;
-    const store = loadStore(sdk2, info);
-    const last = store.export || {};
-    const fmts = formatItems();
-    const outDir = info.path ? dirOf(info.path) : info.desktop || "";
-    const fmtLabel = fmts.find((f) => f.key === last.format)?.label ?? fmts[0].label;
-    const defPath = (key) => `${outDir ? outDir + "/" : ""}${(info.title || "design").replace(/\.[^.]*$/, "")}.${FORMATS[key].ext}`;
-    const first = sdk2.runDialog("Export embroidery", [
-      { id: "format", type: "combo", label: "File format", group: "Output", items: fmts.map((f) => f.label), value: fmtLabel },
-      { id: "path", type: "text", label: "Output path (full path incl. file name)", group: "Output", value: last.path || defPath(fmts.find((f) => f.label === fmtLabel).key) },
-      { id: "scope", type: "buttons", label: "Export", group: "Output", items: ["Selection", "Whole page"], value: last.scope || "Whole page" },
-      { id: "hoop", type: "combo", label: "Hoop size", group: "Machine", items: HOOPS.map((h) => h.name), value: last.hoop || HOOPS[0].name },
-      { id: "palette", type: "combo", label: "Snap thread colours to", group: "Machine", items: PALETTES, value: last.palette || PALETTES[0] },
-      { id: "optimise", type: "check", label: "Optimise (group colours, shortest travel)", group: "Plan", value: last.optimise ?? true },
-      { id: "trimThreshold", type: "number", label: "Trim jumps longer than", group: "Plan", unit: "mm", min: 0.5, max: 50, value: last.trimThreshold ?? PLAN_DEFAULTS.trimThreshold },
-      { id: "ties", type: "check", label: "Tie-in / tie-off stitches", group: "Plan", value: last.ties ?? true },
-      { id: "threadList", type: "check", label: "Also write thread list (.txt)", group: "Plan", value: last.threadList ?? true }
-    ], 480);
-    if (!first) return;
-    const fmt = fmts.find((f) => f.label === first.format);
-    const hoop = HOOPS.find((h) => h.name === first.hoop) || HOOPS[0];
-    const pal = PALETTE_DATA[Math.max(0, PALETTES.indexOf(first.palette))];
-    const raws = gather(info, first.scope);
-    if (!raws.length) {
-      sdk2.alertBox(first.scope === "Selection" ? "Nothing selected." : "No vector shapes found on this page.");
-      return;
-    }
-    const { pattern, stats } = build(info, store, raws, {
-      optimise: first.optimise,
-      trimThreshold: first.trimThreshold,
-      tieIn: first.ties,
-      tieOff: first.ties,
-      palette: pal ? loadPalette(pal) : null
-    });
-    if (!stats.stitches) {
-      sdk2.alertBox("Nothing to stitch: the chosen shapes produced no stitches.");
-      return;
-    }
-    const fits = !hoop.w || stats.widthMm <= hoop.w && stats.heightMm <= hoop.h;
-    const summary = [
-      { id: "s1", type: "static", label: "Stitches", group: "Design", value: String(stats.stitches) },
-      { id: "s2", type: "static", label: "Colours / colour changes", group: "Design", value: `${stats.colors} / ${stats.colorChanges}` },
-      { id: "s3", type: "static", label: "Trims / jumps", group: "Design", value: `${stats.trims} / ${stats.jumps}` },
-      { id: "s4", type: "static", label: "Size", group: "Design", value: `${stats.widthMm.toFixed(1)} x ${stats.heightMm.toFixed(1)} mm` },
-      { id: "s5", type: "static", label: "Hoop", group: "Design", value: hoop.w ? fits ? `fits ${hoop.name}` : `DOES NOT FIT ${hoop.name}` : "not checked" },
-      { id: "s6", type: "static", label: "Threads", group: "Design", value: stats.threads.map((t, i) => `${i + 1}:${t.hex}${t.name && t.name !== t.hex ? " " + t.name : ""}`).join("  ") },
-      { id: "s7", type: "static", label: "Writes", group: "Design", value: `${fmt.label} -> ${first.path}` }
-    ];
-    if (!sdk2.runDialog("Export embroidery - confirm", summary, 520)) return;
-    const bytes = FORMATS[fmt.key].write(pattern, {});
-    sdk2.writeFileBytes(first.path, bytes);
-    let extra = "";
-    if (first.threadList) {
-      const txt = first.path.replace(/\.[^./\\]+$/, "") + "-threads.txt";
-      sdk2.writeText(txt, threadReport(pattern, stats, pattern.meta.name));
-      extra = `
-Thread list: ${txt}`;
-    }
-    store.export = { format: fmt.label, path: first.path, scope: first.scope, hoop: hoop.name, palette: first.palette, optimise: first.optimise, trimThreshold: first.trimThreshold, ties: first.ties, threadList: first.threadList };
-    saveStore(sdk2, info, store);
-    sdk2.alertBox(`Wrote ${bytes.length} bytes to ${first.path}${extra}`);
-  }
-  function preview() {
-    const info = needDoc();
-    if (!info) return;
-    const store = loadStore(sdk2, info);
-    const sel = sdk2.readSelection(tolPx(info));
-    const raws = sel.length ? sel : sdk2.readAll(tolPx(info));
-    if (!raws.length) {
-      sdk2.alertBox("No vector shapes to preview.");
-      return;
-    }
-    const { pattern, stats } = build(info, store, raws, { center: false, optimise: store.export?.optimise ?? true });
-    sdk2.addPreview(patternToLines(pattern, info.dpi));
-    sdk2.alertBox(`Preview drawn on layer "${sdk2.PREVIEW_NAME}": ${stats.stitches} stitches, ${stats.colors} colours.
-Run "Clear preview" to remove it.`);
-  }
-  function clearPreview() {
-    if (!needDoc()) return;
-    const n = sdk2.removePreview();
-    sdk2.alertBox(n ? "Preview removed." : "No preview layer found.");
+    sdk2.alertBox(`Saved settings for ${raws.length} shape${raws.length > 1 ? "s" : ""}. Use "Preview the stitches" to see the effect.` + trySave(info, store));
   }
   function threadList() {
-    const info = needDoc();
-    if (!info) return;
+    const pf = preflight();
+    if (!pf) return;
+    const { info, saveDir } = pf;
     const store = loadStore(sdk2, info);
-    const raws = gather(info, "Whole page");
+    const { raws } = gather(info, true);
     if (!raws.length) {
-      sdk2.alertBox("No vector shapes found.");
+      sdk2.alertBox("There are no shapes to list threads for.");
       return;
     }
-    const outDir = info.path ? dirOf(info.path) : info.desktop || "";
-    const res = sdk2.runDialog("Thread list", [{ id: "path", type: "text", label: "Write to", group: "Output", value: `${outDir ? outDir + "/" : ""}${baseOf(info.title || "design")}-threads.txt` }]);
-    if (!res) return;
-    const { pattern, stats } = build(info, store, raws, {});
+    const { pattern, stats } = build(info, store, raws, planOptsFrom(store.export?.plan));
     const text = threadReport(pattern, stats, pattern.meta.name);
-    sdk2.writeText(res.path, text);
+    const path = `${saveDir}/${safeName(info.title)}-threads.txt`;
+    sdk2.writeText(path, text);
     sdk2.alertBox(text + `
-Saved to ${res.path}`);
+Saved to ${path}`);
+  }
+  function diagnose() {
+    const info = sdk2.getDocumentInfo();
+    const env = sdk2.getEnvironment();
+    const saveDir = norm(env.roots && env.roots[0] || env.desktop || "");
+    const text = sdk2.diagnose(info ? tolPx(info) : 1);
+    let where = "";
+    if (env.fileSystem && saveDir) {
+      try {
+        sdk2.writeText(`${saveDir}/embroidery-diagnostics.txt`, text);
+        where = `
+
+Also saved to ${saveDir}/embroidery-diagnostics.txt`;
+      } catch (e) {
+        where = "\n\n(Could not save the report to a file; copy it from this window or the Log Console.)";
+      }
+    }
+    sdk2.alertBox(text.slice(0, 1800) + (text.length > 1800 ? "\n...(cut off - see the saved file)" : "") + where, "Embroidery diagnostics");
   }
   function menu() {
-    const actions = { "Params (edit stitch settings)": editParams, "Export embroidery file": exportEmbroidery, "Preview stitches": preview, "Clear preview": clearPreview, "Thread list": threadList };
-    const r2 = sdk2.runDialog("Embroidery", [{ id: "a", type: "combo", label: "Action", group: "", items: Object.keys(actions), value: "Export embroidery file" }], 380);
-    if (r2) actions[r2.a]();
+    const info = sdk2.getDocumentInfo();
+    if (!info) {
+      sdk2.alertBox("Open a document first, with some shapes in it.");
+      return;
+    }
+    const n = sdk2.countSelection();
+    const status = n ? `${n} shape${n > 1 ? "s" : ""} selected - only those will be used.` : "Nothing selected - the whole page will be used.";
+    const r2 = sdk2.runDialog("Embroidery", [
+      { id: "status", type: "static", label: "Selection", group: "Embroidery", value: status },
+      { id: "a", type: "combo", label: "What would you like to do?", group: "Embroidery", items: Object.values(ACTIONS), value: ACTIONS.make }
+    ], 480);
+    if (!r2) return;
+    const fn = { [ACTIONS.make]: makeFile, [ACTIONS.preview]: preview, [ACTIONS.clear]: clearPreview, [ACTIONS.settings]: settings, [ACTIONS.threads]: threadList, [ACTIONS.diagnose]: diagnose }[r2.a];
+    fn();
   }
-  return { editParams, exportEmbroidery, preview, clearPreview, threadList, menu };
+  return { menu, makeFile, preview, clearPreview, settings, threadList, diagnose };
 }
 function patternToLines(pattern, dpi, weightMm = 0.18) {
   const k = duToPx(dpi);
   const lines = [];
   let ti = 0, cur = null;
   const rgb = () => pattern.threads[Math.min(ti, pattern.threads.length - 1)]?.color ?? 8421504;
+  const weightPx = Math.max(0.5, mmToPx(weightMm, dpi));
   const flush = () => {
     if (cur && cur.pts.length > 1) lines.push(cur);
     cur = null;
   };
   for (const s of pattern.stitches) {
     if (s.cmd === CMD.STITCH) {
-      if (!cur) cur = { pts: [], rgb: rgb(), weightPx: Math.max(0.5, mmToPx(weightMm, dpi)) };
+      if (!cur) cur = { pts: [], rgb: rgb(), weightPx };
       cur.pts.push([s.x * k, s.y * k]);
     } else {
       flush();
       if (s.cmd === CMD.COLOR_CHANGE) ti++;
-      if (s.cmd === CMD.JUMP) cur = { pts: [[s.x * k, s.y * k]], rgb: rgb(), weightPx: Math.max(0.5, mmToPx(weightMm, dpi)) };
+      if (s.cmd === CMD.JUMP) cur = { pts: [[s.x * k, s.y * k]], rgb: rgb(), weightPx };
     }
   }
   flush();
   return lines;
 }
-var PALETTE_DATA, TOL_MM, dirOf, baseOf;
+var PALETTE_DATA, TOL_MM, ACTIONS, norm, underAny, dirOf, safeName, NO_PERMISSION;
 var init_adapter = __esm({
   "src/affinity/adapter.js"() {
     init_stitch();
@@ -8844,7 +9032,6 @@ var init_adapter = __esm({
     init_formats();
     init_pattern();
     init_palette();
-    init_params();
     init_convert();
     init_storage();
     init_ui_spec();
@@ -8853,12 +9040,37 @@ var init_adapter = __esm({
     init_palette_robison_anton();
     PALETTE_DATA = [null, palette_madeira_default, palette_isacord_default, palette_robison_anton_default];
     TOL_MM = 0.2;
-    dirOf = (p) => p.replace(/[/\\][^/\\]*$/, "");
-    baseOf = (p) => p.replace(/^.*[/\\]/, "").replace(/\.[^.]*$/, "");
+    ACTIONS = {
+      make: "Make an embroidery file",
+      preview: "Preview the stitches on the page",
+      clear: "Remove the preview",
+      settings: "Change stitch settings (density, stitch type, underlay...)",
+      threads: "Save a thread list (text file)",
+      diagnose: "Send a diagnostic report (if something looks wrong)"
+    };
+    norm = (p) => String(p || "").replace(/\\/g, "/").replace(/\/+$/, "");
+    underAny = (path, roots) => roots.some((r2) => {
+      const a = norm(path).toLowerCase(), b2 = norm(r2).toLowerCase();
+      return a === b2 || a.startsWith(b2 + "/");
+    });
+    dirOf = (p) => norm(p).replace(/\/[^/]*$/, "");
+    safeName = (s) => String(s || "design").replace(/\.[^.]*$/, "").replace(/[^\w .()-]+/g, "_").trim() || "design";
+    NO_PERMISSION = [
+      "Embroidery needs permission to save files, and Affinity has it switched off.",
+      "",
+      "Turn it on once:",
+      "  1. Open Settings (Edit > Settings on Windows, Affinity > Settings on Mac) and choose Scripting.",
+      '  2. Tick "Enable Affinity Scripting".',
+      '  3. Under Default Permissions tick "Access the file system".',
+      '  4. Under "File System access" click Add and choose the folder you want embroidery files saved to (for example your Desktop).',
+      `  5. In the Script Editor, open this script's Settings (cog icon) and make sure "Access the file system" is ticked too.`,
+      "",
+      "Then run the script again."
+    ].join("\n");
   }
 });
 
-// src/affinity/entries/menu.cjs
+// src/affinity/entries/embroidery.cjs
 var sdk = require_sdk();
 var { createAdapter: createAdapter2 } = (init_adapter(), __toCommonJS(adapter_exports));
 var started = false;
@@ -8868,7 +9080,11 @@ function main() {
   try {
     createAdapter2(sdk).menu();
   } catch (e) {
-    sdk.alertBox("Embroidery error: " + (e && e.stack ? e.stack : e));
+    sdk.alertBox("Embroidery hit a problem:\n\n" + (e && e.message ? e.message : e) + '\n\nChoose "Send a diagnostic report" from the menu and share it.');
+    try {
+      console.log(e && e.stack ? e.stack : e);
+    } catch (x) {
+    }
   }
 }
 module.exports.main = main;

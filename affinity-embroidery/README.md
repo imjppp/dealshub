@@ -25,42 +25,18 @@ targeting Affinity SDK 3.3.3.
 | two open paths + type *satin* | two-rail satin column |
 | closed shape + type *satin* | satin across the shape's long axis |
 
-## Install / build
+## Install / use
+**See `START-HERE.md`** - one script (`dist/embroidery.js`), a one-time Settings step, then a menu inside Affinity.
+
+Developers:
 ```
-cd affinity-embroidery
 npm install            # dev tooling only (esbuild, typescript); the plugin has no runtime dependencies
 npm test               # 36 tests (the pyembroidery cross-check is skipped unless Python + pyembroidery exist)
-npm run build          # -> dist/embroidery-*.js  (single-file CommonJS bundles; JSLib/SDK requires stay external)
+npm run build          # -> dist/embroidery.js  (single-file CommonJS bundle; JSLib/SDK requires stay external)
 ```
-**This is a script, not a plugin** (Affinity's own help: scripting "is not a full plugin system" - no new tools or UI, no
-background work; a script runs when launched, then finishes). So there is no install folder; per the "Running scripts"
-help topic:
-1. **Settings > Scripting**: tick *Enable Affinity Scripting*; under *Default Permissions* tick *Access the file system*;
-   under *File System access* **Add** every folder you will export to (scripts cannot read/write outside them - this also
-   covers the `.embroidery.json` settings file next to your document).
-2. Script Editor panel > **New Script** > paste the contents of `dist/embroidery-menu.js` > check the script's own *Settings*
-   has *Access the file system* ticked > **Save As** (title + category) so it appears in the **Scripts Library** panel.
-   Run it by clicking it there. Repeat for any of the single-purpose scripts below.
-3. Errors and `console.log` output appear in Window > Scripting > **Log Console**.
-
-(Bundles are ~320 KB each because the engine, writers and Clipper are inlined; `npm run build` produces them unminified.
-`.afscript` export from Affinity is the sharing format; I could not generate one offline.)
-
-| Script | Does |
-|---|---|
-| `embroidery-menu.js` | one script with an action chooser (easiest to start with) |
-| `embroidery-params.js` | stitch settings for the selected objects |
-| `embroidery-export.js` | format, hoop, path, palette, plan options -> stats confirmation -> file |
-| `embroidery-preview.js` / `embroidery-clear-preview.js` | draw / remove the stitch simulation layer |
-| `embroidery-thread-list.js` | plain-text thread list and summary |
-
-**Optional: a third-party installer.** [Script Manager for Affinity](https://github.com/JiriKrblich/Affinity-script-manager)
-(by Jiri Krblich; not affiliated with Affinity or this project; I have only read its README, not its code) keeps a local
-library of `.js` scripts and pushes them into Affinity's Scripts panel through Affinity's MCP bridge, with a console and
-preview "run without install". Our bundles and spikes start with the `/** name: / description: / version: / author: */`
-header it reads. Its README notes the Scripts panel needs at least one category before installs work, and the macOS build
-is unsigned/un-notarised - inspect it yourself before trusting it. Pasting into the Script Editor (above) needs none of this.
-A shared "community repository" for it would need a `registry.json` at the root of a public repo, which this subfolder is not.
+It is a *script*, not a plugin (Affinity's own help: scripting "is not a full plugin system" - no new tools or UI, no
+background work). The Script Manager header (`/** name: ... */`) is included for the third-party
+[Script Manager for Affinity](https://github.com/JiriKrblich/Affinity-script-manager) (I have only read its README).
 
 ## Features vs Ink/Stitch
 | Feature | Ink/Stitch | affinity-embroidery |
