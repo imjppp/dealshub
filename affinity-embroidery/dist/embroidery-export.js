@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery: Export
+ * description: Convert vector shapes to machine embroidery (DST, EXP, JEF, PEC, PES, VP3, XXX, U01) with stats and hoop check.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

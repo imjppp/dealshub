@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery Spike 2: colours
+ * description: Diagnostic spike for the affinity-embroidery plugin. Prints what the SDK does; writes embroidery-spike-N.txt to the Desktop.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 // Spike 2 - colours: fill and stroke
 // Self-contained: Script Editor panel > New Script > paste this whole file > Run (F5 / Ctrl+Return; Cmd+Return on Mac).
 // Needs Settings > Scripting > "Enable Affinity Scripting"; spikes 3 and 5 also need "Access the file system" ticked in the

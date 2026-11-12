@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery: Preview stitches
+ * description: Draw the planned stitches as thin coloured lines on a temporary layer.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery: Params
+ * description: Edit embroidery stitch settings (type, density, underlay, satin options) for the selected shapes.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

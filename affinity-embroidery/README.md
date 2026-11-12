@@ -54,6 +54,14 @@ help topic:
 | `embroidery-preview.js` / `embroidery-clear-preview.js` | draw / remove the stitch simulation layer |
 | `embroidery-thread-list.js` | plain-text thread list and summary |
 
+**Optional: a third-party installer.** [Script Manager for Affinity](https://github.com/JiriKrblich/Affinity-script-manager)
+(by Jiri Krblich; not affiliated with Affinity or this project; I have only read its README, not its code) keeps a local
+library of `.js` scripts and pushes them into Affinity's Scripts panel through Affinity's MCP bridge, with a console and
+preview "run without install". Our bundles and spikes start with the `/** name: / description: / version: / author: */`
+header it reads. Its README notes the Scripts panel needs at least one category before installs work, and the macOS build
+is unsigned/un-notarised - inspect it yourself before trusting it. Pasting into the Script Editor (above) needs none of this.
+A shared "community repository" for it would need a `registry.json` at the root of a public repo, which this subfolder is not.
+
 ## Features vs Ink/Stitch
 | Feature | Ink/Stitch | affinity-embroidery |
 |---|---|---|

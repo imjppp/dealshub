@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery: Thread list
+ * description: Write a plain-text thread list and stitch summary for the design.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;

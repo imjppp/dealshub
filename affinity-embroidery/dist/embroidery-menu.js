@@ -1,3 +1,9 @@
+/**
+ * name: Embroidery (menu)
+ * description: Embroidery tools in one script: edit stitch params, export machine embroidery files, preview stitches, thread list.
+ * version: 0.1.0
+ * author: affinity-embroidery
+ */
 "use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
