@@ -39,7 +39,7 @@ const P = (p) => `(${r1(p.x)}, ${r1(p.y)})`;
 
 function main() {
   const doc = Document.current;
-  if (!doc) { UiApi.alert('Open a document with some vector shapes (select a few) and run again.', 'Spike 1'); return; }
+  if (!doc) { log('no document open'); UiApi.alert('Open a document with some vector shapes (select a few) and run again.', 'Spike 1'); return; }
   log('document:', doc.title, 'dpi=', doc.dpi, 'units=', String(doc.units && (doc.units.name ?? doc.units.value ?? doc.units)));
   log('selection count:', doc.selection.nodes.toArray().length);
   const sel = []; collect(doc.selection.nodes.toArray(), sel);
@@ -75,4 +75,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
-main(); // the Script Editor expects the script to call main() itself
+try { main(); } catch (e) { log('CRASH: ' + (e && e.stack ? e.stack : e)); finish(); } // the Script Editor expects the script to call main() itself

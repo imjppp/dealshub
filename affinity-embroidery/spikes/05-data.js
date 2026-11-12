@@ -29,9 +29,9 @@ const { Document } = require('/document.js');
 const { FileSystemApi } = require('affinity:fs');
 function main() {
   const doc = Document.current;
-  if (!doc) { UiApi.alert('Open a document, select one shape, run. Then SAVE, CLOSE, REOPEN, select the same shape and run AGAIN.', 'Spike 5'); return; }
+  if (!doc) { log('no document open'); UiApi.alert('Open a document, select one shape, run. Then SAVE, CLOSE, REOPEN, select the same shape and run AGAIN.', 'Spike 5'); return; }
   const node = doc.selection.nodes.toArray()[0];
-  if (!node) { UiApi.alert('Select one shape first.', 'Spike 5'); return; }
+  if (!node) { log('nothing selected'); UiApi.alert('Select one shape first.', 'Spike 5'); return; }
   log('node id:', node.nodeId, 'document path:', doc.path, 'persistentUuid:', doc.persistentUuid);
   // (a) what can we READ off a node?
   attempt('description', () => node.description);
@@ -57,4 +57,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
-main(); // the Script Editor expects the script to call main() itself
+try { main(); } catch (e) { log('CRASH: ' + (e && e.stack ? e.stack : e)); finish(); } // the Script Editor expects the script to call main() itself

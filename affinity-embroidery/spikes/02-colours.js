@@ -29,9 +29,9 @@ const { Document } = require('/document.js');
 const hex = (c) => '#' + [c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, '0')).join('');
 function main() {
   const doc = Document.current;
-  if (!doc) { UiApi.alert('Open a document and select shapes with fills/strokes.', 'Spike 2'); return; }
+  if (!doc) { log('no document open'); UiApi.alert('Open a document and select shapes with fills/strokes.', 'Spike 2'); return; }
   const nodes = doc.selection.nodes.toArray().filter((n) => n.isVectorNode);
-  if (!nodes.length) { UiApi.alert('Select some vector shapes first.', 'Spike 2'); return; }
+  if (!nodes.length) { log('nothing selected'); UiApi.alert('Select some vector shapes first.', 'Spike 2'); return; }
   for (const node of nodes.slice(0, 8)) {
     log('---- node', node.nodeId);
     attempt('hasBrushFill', () => node.hasBrushFill);
@@ -51,4 +51,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
-main(); // the Script Editor expects the script to call main() itself
+try { main(); } catch (e) { log('CRASH: ' + (e && e.stack ? e.stack : e)); finish(); } // the Script Editor expects the script to call main() itself

@@ -47,4 +47,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
-main(); // the Script Editor expects the script to call main() itself
+try { main(); } catch (e) { log('CRASH: ' + (e && e.stack ? e.stack : e)); finish(); } // the Script Editor expects the script to call main() itself

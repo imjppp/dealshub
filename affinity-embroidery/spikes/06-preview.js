@@ -38,7 +38,7 @@ const { CurveApi } = require('affinity:geometry');
 const NAME = 'Embroidery preview';
 function main() {
   const doc = Document.current;
-  if (!doc) { UiApi.alert('Open a document first.', 'Spike 6'); return; }
+  if (!doc) { log('no document open'); UiApi.alert('Open a document first.', 'Spike 6'); return; }
   const noFill = FillDescriptor.createNone();
   const lines = [
     { rgb: 0xff0000, pts: Array.from({ length: 60 }, (_, i) => ({ x: 50 + i * 4, y: 50 + (i % 2) * 12 })) },
@@ -69,4 +69,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
-main(); // the Script Editor expects the script to call main() itself
+try { main(); } catch (e) { log('CRASH: ' + (e && e.stack ? e.stack : e)); finish(); } // the Script Editor expects the script to call main() itself
