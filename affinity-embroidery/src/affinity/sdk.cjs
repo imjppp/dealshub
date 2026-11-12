@@ -165,19 +165,23 @@ const confirmBox = (message, title = 'Embroidery') => UiApi.confirm(message, tit
 const chooseFile = () => safe(() => UiApi.chooseFile(), '');
 
 // ------------------------------------------------------------------ files
+const FS_HINT = ' - In Affinity: Settings > Scripting > enable "Access the file system" for new scripts, ADD the folder you are writing to under "File System access" (scripts cannot touch files outside those folders), and make sure this script\'s own Settings (cog icon on the Script Editor) have "Access the file system" ticked.';
+function fsFail(action, path, e) { throw new Error(`Could not ${action} ${path}: ${e && e.message ? e.message : e}${FS_HINT}`); }
 function writeFileBytes(path, bytes) {
-  const f = File.create(path, 'wb');
+  let f;
+  try { f = File.create(path, 'wb'); } catch (e) { fsFail('write', path, e); }
   try {
     // hand over an exact-size ArrayBuffer
     const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
     f.write(ab, bytes.byteLength);
     f.flush();
-  } finally { f.close(); }
+  } catch (e) { fsFail('write', path, e); } finally { try { f.close(); } catch (e) { /* already closed */ } }
 }
 function writeText(path, text) { writeFileBytes(path, utf8Encode(text)); }
 function fileExists(path) { return safe(() => FileSystemApi.exists(path), false); }
 function readText(path) {
-  const f = File.create(path, 'rb');
+  let f;
+  try { f = File.create(path, 'rb'); } catch (e) { fsFail('read', path, e); }
   try {
     const len = f.length;
     const buf = new ArrayBuffer(len);

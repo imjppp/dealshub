@@ -356,14 +356,28 @@ var require_sdk = __commonJS({
     var alertBox = (message, title = "Embroidery") => UiApi.alert(message, title);
     var confirmBox = (message, title = "Embroidery") => UiApi.confirm(message, title);
     var chooseFile = () => safe(() => UiApi.chooseFile(), "");
+    var FS_HINT = ` - In Affinity: Settings > Scripting > enable "Access the file system" for new scripts, ADD the folder you are writing to under "File System access" (scripts cannot touch files outside those folders), and make sure this script's own Settings (cog icon on the Script Editor) have "Access the file system" ticked.`;
+    function fsFail(action, path, e) {
+      throw new Error(`Could not ${action} ${path}: ${e && e.message ? e.message : e}${FS_HINT}`);
+    }
     function writeFileBytes(path, bytes) {
-      const f = File.create(path, "wb");
+      let f;
+      try {
+        f = File.create(path, "wb");
+      } catch (e) {
+        fsFail("write", path, e);
+      }
       try {
         const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
         f.write(ab, bytes.byteLength);
         f.flush();
+      } catch (e) {
+        fsFail("write", path, e);
       } finally {
-        f.close();
+        try {
+          f.close();
+        } catch (e) {
+        }
       }
     }
     function writeText(path, text) {
@@ -373,7 +387,12 @@ var require_sdk = __commonJS({
       return safe(() => FileSystemApi.exists(path), false);
     }
     function readText(path) {
-      const f = File.create(path, "rb");
+      let f;
+      try {
+        f = File.create(path, "rb");
+      } catch (e) {
+        fsFail("read", path, e);
+      }
       try {
         const len = f.length;
         const buf = new ArrayBuffer(len);
@@ -7895,7 +7914,7 @@ function write8(pattern) {
   w.u32le(0).u32le(st.length + 2).u16le(Math.trunc(last.x)).u16le(-Math.trunc(last.y));
   while (w.tell() < 256) w.u8(0);
   let xx = 0, yy = 0, needle = 1;
-  let started = false;
+  let started2 = false;
   for (const s of st) {
     const dx = s.x - xx, dy = s.y - yy;
     xx += dx;
@@ -7905,8 +7924,8 @@ function write8(pattern) {
     if (dx <= 0) cmd |= 32;
     const ax = Math.abs(dx), ay = Math.abs(dy);
     if (s.cmd === CMD.STITCH) {
-      if (!started) {
-        started = true;
+      if (!started2) {
+        started2 = true;
         w.u8(232 | needle).u8(0).u8(0);
       }
       w.u8(cmd).u8(ay).u8(ax);
@@ -8836,7 +8855,10 @@ var init_adapter = __esm({
 // src/affinity/entries/export.cjs
 var sdk = require_sdk();
 var { createAdapter: createAdapter2 } = (init_adapter(), __toCommonJS(adapter_exports));
+var started = false;
 function main() {
+  if (started) return;
+  started = true;
   try {
     createAdapter2(sdk).exportEmbroidery();
   } catch (e) {
@@ -8844,3 +8866,4 @@ function main() {
   }
 }
 module.exports.main = main;
+main();

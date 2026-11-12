@@ -7,10 +7,20 @@ declarations say. Each item maps to a spike in `spikes/` that will confirm or re
 The declarations are *generated* and lag the runtime in one known way: enums are declared as plain TypeScript enums, but
 JSLib treats enum members as objects with `.value` (`FillType.Solid.value`). `sdk.cjs` accepts both (`ev()`).
 
-## Script shape
-JSLib examples are CommonJS files that `require('/document.js')`-style JSLib modules and `require('affinity:xxx')` raw
-modules, and export `module.exports.main`. Globals `alert()` is used by examples; `UiApi.alert/confirm/prompt` also exist.
-Nothing in the SDK material says *where scripts are installed or how they are launched* - see MORNING.md.
+## Script shape (confirmed by Affinity's help, https://www.affinity.studio/help/scripting-in-affinity/ and /running-scripts/, /trusting-scripts/)
+* Scripting is **off by default** (Settings > Scripting > Enable Affinity Scripting). Scripts live in the **Script Editor** /
+  **Scripts Library** panels (no install folder). Run: Library click, or editor Run (F5 / Ctrl+Return / Cmd+Return).
+* Structure: `require(...)` modules, a `main()` function, **and a direct `main();` call**. CommonJS by default
+  (an ES-module mode exists per script: "Run as module"). JSLib's bundled example files export `main` instead; the
+  plugin's bundles do both behind a run-once guard.
+* Permissions are per script: *Access the file system* (only inside folders listed under Settings > Scripting > File System
+  access), *Access networks*, *Canva AI*. New scripts inherit the defaults; imported ones keep the author's. JSLib modules
+  (`/document.js` ...) can always be required. Pasted/new scripts are trusted; imported ones are not.
+* Output: `console.log` and errors go to the **Log Console** panel. Sharing: `.afscript` / `.afscripts` export.
+* "Scripting is not a plugin system": no new tools, no UI changes, no background work, no input interception - it runs when
+  launched and finishes. Dialogs may offer a live-preview pattern (see the Crop Marks example).
+* API reference: `affin.co/affinity-sdk` (= sdk.affinity.studio). Note British spellings (`colour`, `centre`).
+* There is also an MCP server / AI-assistant route ("AI Automation with Claude"); not used here.
 
 ## Phase 0 items
 

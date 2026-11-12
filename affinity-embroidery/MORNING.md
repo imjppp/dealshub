@@ -4,13 +4,14 @@ Overnight build of an Affinity Studio embroidery plugin (SDK 3.3.3, pure JavaScr
 `claude/affinity-embroidery-plugin-1qyble`, folder `affinity-embroidery/`. No PR was opened.
 
 **One-line status:** the stitch engine, planner and nine file writers are built, unit-tested and cross-checked against
-pyembroidery; the Affinity integration is written but has never run (no Affinity here), so expect a round of small fixes in
+pyembroidery; the Affinity integration is written but has never run (Affinity's help is now read, so the run/permission model is known) (no Affinity here), so expect a round of small fixes in
 one file, `src/affinity/sdk.cjs`.
 
 First, a correction to the brief's premise: I **could** read `affinity.d.ts` after all. `sdk.affinity.studio` was blocked
 by the sandbox's network allowlist; you approved adding it to your Default cloud environment, which is why the plugin is
 written against the real declarations and JSLib (also downloaded from the SDK site) rather than guesses. That allowlist
-entry stays on your Default environment until you remove it.
+entry stays on your Default environment until you remove it. (Later, to read Affinity's scripting help, you also approved
+`www.affinity.studio`, `static.canva.com` and `content-management-files.canva.com` - same note applies.)
 
 ## 1. Done and tested (in Node)
 | Area | Evidence |
@@ -38,19 +39,19 @@ assumptions, each covered by a spike:
 * Whether node ids survive save/reopen (sidecar keying). *(spike 5)*
 * Preview layer: `CurveApi.setPath` with plain `{x,y}` objects, container `userDescription`, delete-by-selection. *(spike 6)*
 * Performance on big documents (not measured), TextEncoder-free code paths (I avoided TextEncoder/Decoder on purpose).
-* **How scripts are installed/launched.** The SDK material I could reach (d.ts, docs index, JSLib, examples) shows script *shape* (CommonJS file exporting `main`) but not the install location or menu. I won't guess.
+* **How scripts run - now known from Affinity's help** (README "Install"): paste into the Script Editor, enable scripting + file-system access + add folders in Settings > Scripting, save to the Scripts Library, run from there. Changed because of it: bundles now call `main()` themselves (the help says to) behind a run-once guard, and file errors tell you to allow the folder. Still unverified: pasting a ~320 KB script into the editor, and whether `export` + direct `main()` ever double-runs (you'd see two dialogs - tell me).
 
 ## 3. Exact steps for the morning
-1. `cd affinity-embroidery && npm install && npm test && npm run build` (also `npm run typecheck` after `npm run fetch-types`).
-2. **Spikes** - read `spikes/README.md`; run `spikes/01…06` in order in Affinity with a few shapes on the page (a filled+stroked rectangle, a wavy open curve, a group, an ellipse, a gradient shape). Each shows an alert and writes `~/Desktop/embroidery-spike-N.txt`. Keep those files; every `FAIL` line points at a one-line fix in `sdk.cjs`.
-   * Spike 5 needs two runs (save → close → reopen → select same shape → run again).
-3. Load `dist/embroidery-menu.js` the same way you load any SDK script. Draw a **filled rectangle with a 3 mm stroke**, select it, then:
-   * Menu → *Preview stitches* (expect a fill + satin border drawn as thin lines on an "Embroidery preview" layer) → *Clear preview*.
-   * Menu → *Params*: set Stitch type = *Fill*, angle 45; preview again.
-   * Menu → *Export embroidery file*: choose DST, hoop 100×100, edit the output path; confirm the stats dialog.
-4. Look at the exported file in any viewer. Quick option without installing anything else: `pip install pyembroidery pillow`, then
+0. **Enable scripting** (off by default): Edit > Settings (Windows) / Affinity > Settings (Mac) > **Scripting** > *Enable Affinity Scripting*; *Default Permissions* > tick **Access the file system**; *File System access* > **Add** your Desktop and the folder you'll export into. (Scripts cannot touch files outside listed folders - the #1 thing that will bite.)
+1. `cd affinity-embroidery && npm install && npm test && npm run build` (optionally `npm run fetch-types && npm run typecheck`).
+2. **Spikes** - `spikes/README.md` has the exact table. Script Editor > New Script > paste `spikes/01-shapes.js` > Run (F5 / Ctrl+Return). Do 01-06 in order with a few shapes on the page (filled+stroked rectangle, wavy open curve, a group, an ellipse, a gradient shape). Each shows an alert and writes `Desktop/embroidery-spike-N.txt`; `console.log` also goes to Window > Scripting > Log Console. Keep the output; every `FAIL` line is a one-line fix in `sdk.cjs`. Spike 5 needs two runs (save, close, reopen, select same shape, run again).
+3. Paste `dist/embroidery-menu.js` into a new script, make sure its Settings have *Access the file system* ticked, **Save As** into the Scripts Library, and run it. Draw a **filled rectangle with a 3 mm stroke**, select it, then:
+   * *Preview stitches* (fill + satin border as thin lines on an "Embroidery preview" layer) > *Clear preview*.
+   * *Params*: Stitch type = *Fill*, angle 45; preview again.
+   * *Export embroidery file*: DST, hoop 100x100, edit the output path (must be inside an allowed folder); confirm the stats dialog.
+4. Check the exported file in any viewer. Without installing anything else: `pip install pyembroidery pillow`, then
    `python3 -c "import pyembroidery as p; p.write_png(p.read('out.dst'), 'out.png')"`.
-5. Repeat the export as PES / VP3 and open them in your machine vendor's software (VP3 is the risky one - see below).
+5. Repeat the export as PES / VP3 and open in your machine vendor's software (VP3 is the risky one).
 
 ## 4. Known gaps and limitations
 * **Fill routing is simpler than Ink/Stitch's**: serpentine chains per region, short travel stitches *inside* the shape, jumps (with trims over 3 mm) otherwise. No Euler-path optimiser and no hidden under-path travel along the outline, so complex shapes jump more than Ink/Stitch would.
@@ -73,4 +74,4 @@ assumptions, each covered by a spike:
 7. Text → curves workflow; gradient fill → average colour option; multi-object start/end pickers (e.g. named marker objects).
 8. Guided fill, meander/ripple, lettering.
 9. Performance profile on large documents (the NN chain/block ordering is O(n²)).
-10. Decide how scripts are packaged/distributed once the install mechanism is confirmed.
+10. Distribution: export the working scripts from the Scripts Library as `.afscript`/`.afscripts` and add them to the repo; consider minified bundles and a live-preview export dialog (Affinity's Crop Marks example shows the pattern).

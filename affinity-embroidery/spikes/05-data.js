@@ -1,5 +1,7 @@
 // Spike 5 - data: per-object custom data
-// Self-contained: paste into Affinity's script runner (or save as a .js script) and run.
+// Self-contained: Script Editor panel > New Script > paste this whole file > Run (F5 / Ctrl+Return; Cmd+Return on Mac).
+// Needs Settings > Scripting > "Enable Affinity Scripting"; spikes 3 and 5 also need "Access the file system" ticked in the
+// script's own Settings and your Desktop folder added under Settings > Scripting > File System access.
 // Output: shown in an alert AND written to <Desktop>/embroidery-spike-5.txt (in case the alert truncates).
 'use strict';
 const { ApplicationApi } = require('affinity:application');
@@ -49,3 +51,4 @@ function main() {
   finish();
 }
 module.exports.main = main;
+main(); // the Script Editor expects the script to call main() itself

@@ -32,9 +32,19 @@ npm install            # dev tooling only (esbuild, typescript); the plugin has 
 npm test               # 36 tests (the pyembroidery cross-check is skipped unless Python + pyembroidery exist)
 npm run build          # -> dist/embroidery-*.js  (single-file CommonJS bundles; JSLib/SDK requires stay external)
 ```
-Load the files from `dist/` into Affinity's scripting feature (each exports `main`). **How scripts are installed and
-launched is not described in the SDK material I could reach**, so this is the one install step I cannot give exactly -
-see MORNING.md.
+**This is a script, not a plugin** (Affinity's own help: scripting "is not a full plugin system" - no new tools or UI, no
+background work; a script runs when launched, then finishes). So there is no install folder; per the "Running scripts"
+help topic:
+1. **Settings > Scripting**: tick *Enable Affinity Scripting*; under *Default Permissions* tick *Access the file system*;
+   under *File System access* **Add** every folder you will export to (scripts cannot read/write outside them - this also
+   covers the `.embroidery.json` settings file next to your document).
+2. Script Editor panel > **New Script** > paste the contents of `dist/embroidery-menu.js` > check the script's own *Settings*
+   has *Access the file system* ticked > **Save As** (title + category) so it appears in the **Scripts Library** panel.
+   Run it by clicking it there. Repeat for any of the single-purpose scripts below.
+3. Errors and `console.log` output appear in Window > Scripting > **Log Console**.
+
+(Bundles are ~320 KB each because the engine, writers and Clipper are inlined; `npm run build` produces them unminified.
+`.afscript` export from Affinity is the sharing format; I could not generate one offline.)
 
 | Script | Does |
 |---|---|
