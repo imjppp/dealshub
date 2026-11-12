@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["src/core/*.js", "src/formats/*.js", "src/stitch/*.js", "src/plan/*.js", "src/affinity/adapter.js", "src/affinity/convert.js", "src/affinity/storage.js", "src/affinity/ui-spec.js"]
+}
