@@ -79,7 +79,7 @@ function zigzag(A, B, maxStitch) {
 /**
  * Build a complete satin column (underlays + top stitching) as continuous segments.
  * @param {{A:number[][],B:number[][],mid?:number[][]}} rails raw rails (already paired or not)
- * @param {object} o  all values in du
+ * @param {any} o  all values in du
  */
 export function satinColumn(rails, o) {
   const { spacing, pullComp, maxStitch, centerWalk, contour, zigzagUnderlay, underlayInset, underlayStitch, zigzagSpacing,

@@ -10,9 +10,9 @@ export const mmToPx = (mm, dpi) => (mm * dpi) / 25.4;
 export const pxToMm = (px, dpi) => (px * 25.4) / dpi;
 
 /**
- * @param {object} raw shape from sdk.readSelection()/readAll()
+ * @param {any} raw shape from sdk.readSelection()/readAll()
  * @param {number} dpi
- * @param {object} [params] per-object overrides
+ * @param {any} [params] per-object overrides
  * @param {{toleranceMm?:number}} [opt]
  */
 export function toEngineShape(raw, dpi, params = {}, { toleranceMm = 0.2 } = {}) {

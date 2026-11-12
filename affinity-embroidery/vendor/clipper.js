@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Vendored: Clipper (JS port) 6.4.2 by Angus Johnson / Timo - Boost Software License 1.0. ESM wrapper added; source unmodified.
 const module = { exports: {} };
 /*******************************************************************************

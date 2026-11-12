@@ -73,9 +73,9 @@ function lockStitch(p, toward, lenDu) {
 }
 
 /**
- * @param {object[]} blocks from stitchShape()
+ * @param {any[]} blocks from stitchShape()
  * @param {Partial<typeof PLAN_DEFAULTS>} [opts]
- * @returns {{pattern:Pattern, stats:object}}
+ * @returns {{pattern:Pattern, stats:ReturnType<typeof computeStats>}}
  */
 export function buildPattern(blocks, opts = {}) {
   const o = { ...PLAN_DEFAULTS, ...opts };

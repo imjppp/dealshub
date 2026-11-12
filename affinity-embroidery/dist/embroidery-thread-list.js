@@ -32,6 +32,139 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// src/core/bytes.js
+var bytes_exports = {};
+__export(bytes_exports, {
+  ByteWriter: () => ByteWriter,
+  utf8Decode: () => utf8Decode,
+  utf8Encode: () => utf8Encode
+});
+function utf8Encode(s) {
+  const out = [];
+  for (let i = 0; i < s.length; i++) {
+    let c = s.codePointAt(i);
+    if (c > 65535) i++;
+    if (c < 128) out.push(c);
+    else if (c < 2048) out.push(192 | c >> 6, 128 | c & 63);
+    else if (c < 65536) out.push(224 | c >> 12, 128 | c >> 6 & 63, 128 | c & 63);
+    else out.push(240 | c >> 18, 128 | c >> 12 & 63, 128 | c >> 6 & 63, 128 | c & 63);
+  }
+  return Uint8Array.from(out);
+}
+function utf8Decode(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; ) {
+    const c = bytes[i++];
+    if (c < 128) s += String.fromCharCode(c);
+    else if (c < 224) s += String.fromCharCode((c & 31) << 6 | bytes[i++] & 63);
+    else if (c < 240) {
+      s += String.fromCharCode((c & 15) << 12 | (bytes[i] & 63) << 6 | bytes[i + 1] & 63);
+      i += 2;
+    } else {
+      const cp = (c & 7) << 18 | (bytes[i] & 63) << 12 | (bytes[i + 1] & 63) << 6 | bytes[i + 2] & 63;
+      i += 3;
+      s += String.fromCodePoint(cp);
+    }
+  }
+  return s;
+}
+var ByteWriter;
+var init_bytes = __esm({
+  "src/core/bytes.js"() {
+    ByteWriter = class {
+      constructor(size = 4096) {
+        this.buf = new Uint8Array(size);
+        this.dv = new DataView(this.buf.buffer);
+        this.pos = 0;
+        this.len = 0;
+      }
+      _ensure(n) {
+        if (this.pos + n <= this.buf.length) return;
+        let size = this.buf.length * 2;
+        while (size < this.pos + n) size *= 2;
+        const nb = new Uint8Array(size);
+        nb.set(this.buf);
+        this.buf = nb;
+        this.dv = new DataView(nb.buffer);
+      }
+      _adv(n) {
+        this.pos += n;
+        if (this.pos > this.len) this.len = this.pos;
+      }
+      tell() {
+        return this.pos;
+      }
+      seek(p) {
+        this.pos = p;
+      }
+      u8(v) {
+        this._ensure(1);
+        this.buf[this.pos] = v & 255;
+        this._adv(1);
+        return this;
+      }
+      u16le(v) {
+        this._ensure(2);
+        this.dv.setUint16(this.pos, v & 65535, true);
+        this._adv(2);
+        return this;
+      }
+      u16be(v) {
+        this._ensure(2);
+        this.dv.setUint16(this.pos, v & 65535, false);
+        this._adv(2);
+        return this;
+      }
+      u24le(v) {
+        return this.u8(v).u8(v >> 8).u8(v >> 16);
+      }
+      u24be(v) {
+        return this.u8(v >> 16).u8(v >> 8).u8(v);
+      }
+      u32le(v) {
+        this._ensure(4);
+        this.dv.setUint32(this.pos, v >>> 0, true);
+        this._adv(4);
+        return this;
+      }
+      u32be(v) {
+        this._ensure(4);
+        this.dv.setUint32(this.pos, v >>> 0, false);
+        this._adv(4);
+        return this;
+      }
+      f32le(v) {
+        this._ensure(4);
+        this.dv.setFloat32(this.pos, v, true);
+        this._adv(4);
+        return this;
+      }
+      bytes(arr) {
+        this._ensure(arr.length);
+        this.buf.set(arr, this.pos);
+        this._adv(arr.length);
+        return this;
+      }
+      fill(v, n) {
+        for (let i = 0; i < n; i++) this.u8(v);
+        return this;
+      }
+      /** UTF-8 string, no terminator. */
+      str(s) {
+        return this.bytes(utf8Encode(s));
+      }
+      /** UTF-16 big-endian, no terminator. */
+      str16be(s) {
+        for (let i = 0; i < s.length; i++) this.u16be(s.charCodeAt(i));
+        return this;
+      }
+      result() {
+        return this.buf.slice(0, this.len);
+      }
+    };
+  }
+});
+
 // src/affinity/sdk.cjs
 var require_sdk = __commonJS({
   "src/affinity/sdk.cjs"(exports2, module3) {
@@ -52,9 +185,11 @@ var require_sdk = __commonJS({
     var { UiApi } = require("affinity:ui");
     var { ApplicationApi } = require("affinity:application");
     var { FileSystemApi } = require("affinity:fs");
+    var { utf8Encode: utf8Encode2, utf8Decode: utf8Decode2 } = (init_bytes(), __toCommonJS(bytes_exports));
     var PREVIEW_NAME = "Embroidery preview";
     var isOk = (r2) => (r2?.value ?? r2) == DialogResult.Ok.value;
     var xy = (p) => [p.x, p.y];
+    var ev = (e) => e !== null && typeof e === "object" && "value" in e ? e.value : e;
     function doc() {
       return Document.current;
     }
@@ -104,7 +239,7 @@ var require_sdk = __commonJS({
     function colourOf(fillDescriptor) {
       try {
         const fill = fillDescriptor.fill;
-        if (fill.fillType.value !== require("affinity:fills").FillType.Solid.value) return { rgb: null, alpha: 1, gradient: true };
+        if (ev(fill.fillType) !== ev(require("affinity:fills").FillType.Solid)) return { rgb: null, alpha: 1, gradient: true };
         const c = fill.colour.rgba8;
         return { rgb: c.r << 16 | c.g << 8 | c.b, alpha: (c.alpha ?? 255) / 255 };
       } catch (e) {
@@ -232,7 +367,7 @@ var require_sdk = __commonJS({
       }
     }
     function writeText(path, text) {
-      writeFileBytes(path, new TextEncoder().encode(text));
+      writeFileBytes(path, utf8Encode2(text));
     }
     function fileExists(path) {
       return safe(() => FileSystemApi.exists(path), false);
@@ -243,7 +378,7 @@ var require_sdk = __commonJS({
         const len = f.length;
         const buf = new ArrayBuffer(len);
         f.read(buf, len);
-        return new TextDecoder().decode(new Uint8Array(buf));
+        return utf8Decode2(new Uint8Array(buf));
       } finally {
         f.close();
       }
@@ -6916,104 +7051,6 @@ var init_plan = __esm({
   }
 });
 
-// src/core/bytes.js
-var ByteWriter;
-var init_bytes = __esm({
-  "src/core/bytes.js"() {
-    ByteWriter = class {
-      constructor(size = 4096) {
-        this.buf = new Uint8Array(size);
-        this.dv = new DataView(this.buf.buffer);
-        this.pos = 0;
-        this.len = 0;
-      }
-      _ensure(n) {
-        if (this.pos + n <= this.buf.length) return;
-        let size = this.buf.length * 2;
-        while (size < this.pos + n) size *= 2;
-        const nb = new Uint8Array(size);
-        nb.set(this.buf);
-        this.buf = nb;
-        this.dv = new DataView(nb.buffer);
-      }
-      _adv(n) {
-        this.pos += n;
-        if (this.pos > this.len) this.len = this.pos;
-      }
-      tell() {
-        return this.pos;
-      }
-      seek(p) {
-        this.pos = p;
-      }
-      u8(v) {
-        this._ensure(1);
-        this.buf[this.pos] = v & 255;
-        this._adv(1);
-        return this;
-      }
-      u16le(v) {
-        this._ensure(2);
-        this.dv.setUint16(this.pos, v & 65535, true);
-        this._adv(2);
-        return this;
-      }
-      u16be(v) {
-        this._ensure(2);
-        this.dv.setUint16(this.pos, v & 65535, false);
-        this._adv(2);
-        return this;
-      }
-      u24le(v) {
-        return this.u8(v).u8(v >> 8).u8(v >> 16);
-      }
-      u24be(v) {
-        return this.u8(v >> 16).u8(v >> 8).u8(v);
-      }
-      u32le(v) {
-        this._ensure(4);
-        this.dv.setUint32(this.pos, v >>> 0, true);
-        this._adv(4);
-        return this;
-      }
-      u32be(v) {
-        this._ensure(4);
-        this.dv.setUint32(this.pos, v >>> 0, false);
-        this._adv(4);
-        return this;
-      }
-      f32le(v) {
-        this._ensure(4);
-        this.dv.setFloat32(this.pos, v, true);
-        this._adv(4);
-        return this;
-      }
-      bytes(arr) {
-        this._ensure(arr.length);
-        this.buf.set(arr, this.pos);
-        this._adv(arr.length);
-        return this;
-      }
-      fill(v, n) {
-        for (let i = 0; i < n; i++) this.u8(v);
-        return this;
-      }
-      /** UTF-8 string, no terminator. */
-      str(s) {
-        return this.bytes(new TextEncoder().encode(s));
-      }
-      /** UTF-16 big-endian, no terminator. */
-      str16be(s) {
-        for (let i = 0; i < s.length; i++) this.u16be(s.charCodeAt(i));
-        return this;
-      }
-      result() {
-        return this.buf.slice(0, this.len);
-      }
-    };
-  }
-});
-
 // src/core/encoder.js
 function encode(pattern, caps9) {
   const src = pattern.clone();
@@ -7792,7 +7829,7 @@ var init_vp3 = __esm({
       w.u16be(s.length * 2).str16be(s);
     };
     s8 = (w, s) => {
-      const b2 = new TextEncoder().encode(s);
+      const b2 = utf8Encode(s);
       w.u16be(b2.length).bytes(b2);
     };
     i32 = (v) => Math.trunc(v);
@@ -7855,7 +7892,7 @@ function write8(pattern) {
   if (!st.length) return w.result();
   const bd = p.bounds(), last = st[st.length - 1];
   w.u16le(Math.trunc(bd.minX)).u16le(-Math.trunc(bd.maxY)).u16le(Math.trunc(bd.maxX)).u16le(-Math.trunc(bd.minY));
-  w.u32le(0).u32le(st.length + 1).u16le(Math.trunc(last.x)).u16le(-Math.trunc(last.y));
+  w.u32le(0).u32le(st.length + 2).u16le(Math.trunc(last.x)).u16le(-Math.trunc(last.y));
   while (w.tell() < 256) w.u8(0);
   let xx = 0, yy = 0, needle = 1;
   let started = false;

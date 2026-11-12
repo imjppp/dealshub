@@ -12,7 +12,8 @@ export function write(pattern) {
   if (!st.length) return w.result();
   const bd = p.bounds(), last = st[st.length - 1];
   w.u16le(Math.trunc(bd.minX)).u16le(-Math.trunc(bd.maxY)).u16le(Math.trunc(bd.maxX)).u16le(-Math.trunc(bd.minY));
-  w.u32le(0).u32le(st.length + 1).u16le(Math.trunc(last.x)).u16le(-Math.trunc(last.y));
+  // stitch count = records + END + the needle-select record
+  w.u32le(0).u32le(st.length + 2).u16le(Math.trunc(last.x)).u16le(-Math.trunc(last.y));
   while (w.tell() < 0x100) w.u8(0);
   let xx = 0, yy = 0, needle = 1;
   let started = false;

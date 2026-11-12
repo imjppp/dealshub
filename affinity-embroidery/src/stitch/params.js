@@ -46,7 +46,9 @@ export const DEFAULTS = Object.freeze({
   threadColor: null, // override colour (#rrggbb)
 });
 
-/** Merge overrides over defaults. */
+/** Merge overrides over defaults.
+ * @param {any} [over]
+ * @returns {any} */
 export function resolveParams(over = {}) {
   const p = { ...DEFAULTS };
   for (const [k, v] of Object.entries(over || {})) if (v !== undefined && k in DEFAULTS) p[k] = v;

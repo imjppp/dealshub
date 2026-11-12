@@ -32,6 +32,8 @@ const PREVIEW_NAME = 'Embroidery preview';
 
 const isOk = (r) => (r?.value ?? r) == DialogResult.Ok.value;
 const xy = (p) => [p.x, p.y];
+/** JSLib enum members are objects with .value; affinity.d.ts types them as plain numbers. Accept both. */
+const ev = (e) => (e !== null && typeof e === 'object' && 'value' in e ? e.value : e);
 
 function doc() { return Document.current; }
 
@@ -67,7 +69,7 @@ function readCurve(curve, xf, tolPx) {
 function colourOf(fillDescriptor) {
   try {
     const fill = fillDescriptor.fill;
-    if (fill.fillType.value !== require('affinity:fills').FillType.Solid.value) return { rgb: null, alpha: 1, gradient: true };
+    if (ev(fill.fillType) !== ev(require('affinity:fills').FillType.Solid)) return { rgb: null, alpha: 1, gradient: true };
     const c = fill.colour.rgba8;
     return { rgb: (c.r << 16) | (c.g << 8) | c.b, alpha: (c.alpha ?? 255) / 255 };
   } catch (e) { return null; }
