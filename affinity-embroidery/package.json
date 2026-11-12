@@ -1,0 +1,15 @@
+{
+  "name": "affinity-embroidery",
+  "version": "0.1.0",
+  "description": "Turn Affinity Studio vector artwork into machine embroidery files (pure JavaScript).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/",
+    "build": "node scripts/build.mjs",
+    "examples": "node scripts/make-examples.mjs",
+    "verify": "node scripts/verify-pyembroidery.mjs",
+    "typecheck": "tsc --noEmit -p jsconfig.json"
+  },
+  "devDependencies": {}
+}
