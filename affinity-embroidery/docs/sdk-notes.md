@@ -77,3 +77,11 @@ JSLib treats enum members as objects with `.value` (`FillType.Solid.value`). `sd
 * No SDK-level file/save dialog, no custom data on existing nodes, no way to register a menu item from the SDK material
   (so the plugin ships several single-purpose scripts + one menu script).
 * `affinity:network` is not used (the plugin makes no network calls).
+
+## Findings from running the spikes in Affinity 3.3.3.5004 (macOS)
+* `node.nodeId` is a **BigInt** - never `JSON.stringify` it raw; the plugin stringifies it (`sdk.cjs`).
+* Spike 3: file write works (exact bytes, also from a typed-array view); `UiApi.chooseFile()` and `UiApi.prompt()` work; no save dialog.
+* Spike 4: dialogs and all controls used by the plugin work; values read back as set.
+* Spike 6: adding a preview layer (polyline via `CurveApi.setPath` with plain `{x, y}`) and removing it by selection both work.
+* Log Console shows the MCP bridge's view: permissions `{fileSystem:true, network:false, genAI:false}`, roots `["/Users/jp/Desktop"]` - scripts can only touch the folders listed there.
+* Test document reported `dpi = 300` and `units = 8`.

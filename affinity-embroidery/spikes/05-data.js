@@ -15,7 +15,7 @@ const { UiApi } = require('affinity:ui');
 const { File } = require('/fs.js');
 
 const lines = [];
-const log = (...a) => { const s = a.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(' '); lines.push(s); try { console.log(s); } catch (e) {} };
+const log = (...a) => { const s = a.map((x) => (typeof x === 'string' ? x : JSON.stringify(x, (k, v) => (typeof v === 'bigint' ? v.toString() + 'n' : v)))).join(' '); lines.push(s); try { console.log(s); } catch (e) {} };
 const enc = (s) => Uint8Array.from(unescape(encodeURIComponent(s)), (c) => c.charCodeAt(0));
 const dec = (u8) => decodeURIComponent(escape(String.fromCharCode.apply(null, Array.from(u8))));
 const attempt = (label, fn) => { try { const r = fn(); log(`OK   ${label}`, r === undefined ? '' : r); return r; } catch (e) { log(`FAIL ${label}: ${e && e.message ? e.message : e}`); return undefined; } };
@@ -49,11 +49,11 @@ function main() {
   attempt('read existing sidecar', () => { if (FileSystemApi.exists(sidecar)) { const f = File.create(sidecar, 'rb'); const b = new ArrayBuffer(f.length); f.read(b, f.length); f.close(); store = JSON.parse(dec(new Uint8Array(b))); return store; } return 'none yet'; });
   const r = node.getSpreadVisibleBox();
   const sig = [Math.round(r.x), Math.round(r.y), Math.round(r.width), Math.round(r.height)].join(':');
-  if (store.nodeId !== undefined) {
+  if (store.nodeId !== undefined) { // nodeId is a BigInt in Affinity 3.3.3 - compare as strings
     log('PREVIOUS RUN: nodeId', store.nodeId, 'sig', store.sig, '| NOW: nodeId', node.nodeId, 'sig', sig);
-    log(store.nodeId === node.nodeId ? 'RESULT: node ids ARE stable across save/reopen for this shape.' : 'RESULT: node ids CHANGED - the plugin falls back to the geometry signature.');
+    log(store.nodeId === String(node.nodeId) ? 'RESULT: node ids ARE stable across save/reopen for this shape.' : 'RESULT: node ids CHANGED - the plugin falls back to the geometry signature.');
   } else log('first run: writing sidecar. Now save + close + reopen the document, select the SAME shape, run this spike again.');
-  attempt('write sidecar', () => { const b = enc(JSON.stringify({ nodeId: node.nodeId, sig, params: { type: 'fill' } })); const f = File.create(sidecar, 'wb'); f.write(b.buffer, b.byteLength); f.close(); return sidecar; });
+  attempt('write sidecar', () => { const b = enc(JSON.stringify({ nodeId: String(node.nodeId), sig, params: { type: 'fill' } })); const f = File.create(sidecar, 'wb'); f.write(b.buffer, b.byteLength); f.close(); return sidecar; });
   finish();
 }
 module.exports.main = main;

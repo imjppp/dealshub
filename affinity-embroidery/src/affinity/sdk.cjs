@@ -88,7 +88,8 @@ function readNode(node, dpi, tolPx) {
     stroke = colourOf(node.penFillDescriptor);
     if (stroke) stroke.weightPx = node.lineWeight;
   }
-  return { nodeId: node.nodeId, name: safe(() => node.userDescription, '') || safe(() => node.description, ''), curves, fill, stroke,
+  // nodeId is a BigInt in Affinity 3.3.3 (JSON.stringify throws on it): keep it as a string everywhere
+  return { nodeId: String(node.nodeId), name: safe(() => node.userDescription, '') || safe(() => node.description, ''), curves, fill, stroke,
     bbox: safe(() => { const r = node.getSpreadVisibleBox(); return [r.x, r.y, r.width, r.height]; }, null) };
 }
 

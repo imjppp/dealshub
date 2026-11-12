@@ -266,7 +266,7 @@ var require_sdk = __commonJS({
         if (stroke) stroke.weightPx = node.lineWeight;
       }
       return {
-        nodeId: node.nodeId,
+        nodeId: String(node.nodeId),
         name: safe(() => node.userDescription, "") || safe(() => node.description, ""),
         curves,
         fill,
