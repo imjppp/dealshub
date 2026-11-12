@@ -11,5 +11,8 @@
     "verify": "node scripts/verify-pyembroidery.mjs",
     "typecheck": "tsc --noEmit -p jsconfig.json"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
 }

@@ -2,7 +2,7 @@
 //   file(%vsm%) > design(0x03) > colour block(0x05) > stitch block(0x01)
 // Each block header is 00 <id> 00 <u32be length of everything after this field>.
 // Units: 0.01 mm. Per-colour-block metadata: RGB, catalogue no., name, brand.
-import { ByteWriter } from '../core/bytes.js';
+import { ByteWriter, utf8Encode } from '../core/bytes.js';
 import { CMD, fixThreadCount, intToHex } from '../core/pattern.js';
 import { encode, colorBlocks } from '../core/encoder.js';
 
@@ -10,7 +10,7 @@ export const caps = { maxStitch: 255, maxJump: 3200, stopAsColor: false };
 
 const PRODUCER = 'Produced by     Software Ltd';
 const s16 = (w, s) => { w.u16be(s.length * 2).str16be(s); };
-const s8 = (w, s) => { const b = new TextEncoder().encode(s); w.u16be(b.length).bytes(b); };
+const s8 = (w, s) => { const b = utf8Encode(s); w.u16be(b.length).bytes(b); };
 function patch(w, off) { const cur = w.tell(); w.seek(off); w.u32be(cur - off - 4); w.seek(cur); }
 const i32 = (v) => Math.trunc(v);
 
